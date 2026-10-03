@@ -28,6 +28,16 @@ TinyAPL uses `Complex Double` and **cannot** represent `p` as a distinct exact s
 (ulp at 2^64 is 4096). TinyAPL-native demos use `GSafeP = 65537 (Fermat prime)` for exact local
 arithmetic. Full-field equality is always checked against the Python reference.
 
+## Bi-encoder arithmetic
+
+The SUBLEQ bi-encoder (two towers, fixed permutation, routed dot product) is
+**not** softmax attention and is not trained. Its products and Goldilocks
+residues are extended integers in J (`j/biencoder.ijs`) and R gmp `bigz`
+(`r/biencoder.R`). Python is not a numeric authority for that pipeline.
+TinyAPL cannot represent `p` exactly and is only the earlier experiment.
+The unmasked head must equal `A` times `B`. The routed tensor is reported
+separately and is not required to match that product.
+
 ## SUBLEQ attention pipeline
 
 ```

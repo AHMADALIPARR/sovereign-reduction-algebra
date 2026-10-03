@@ -55,7 +55,8 @@ Latency fields are real `⎕_Measure` samples or explicitly `not_measured`.
 
 ## Goldilocks
 
-- Full field: `reference/goldilocks.py` with `p = 2^64 - 2^32 + 1`.
+- Older reduction-algebra checks: `reference/goldilocks.py` with `p = 2^64 - 2^32 + 1`.
+- Bi-encoder field arithmetic does **not** use that module. J and R hold `p` as an extended integer.
 - TinyAPL demos: `GSafeP = 65537 (Fermat prime)` for exact Double-safe ops.
 - Verification rule: `reference(X) = candidate(X) (mod p)` for full-field cases.
 
@@ -68,19 +69,29 @@ R3 chunked · R4 segmented · R5 tacit-fused · R6 goldilocks-field · R7 subleq
 
 Experimental research code. Crypto helpers are **deterministic stubs**, not production cryptography.
 
-## SUBLEQ bi-encoder (matmul tensor)
+## SUBLEQ bi-encoder (production: J and R)
 
-Not softmax attention and not a trained model. Sources:
+Not softmax attention and not a trained model. No timings are published here.
 
-- `tinyapl/biencoder.apl` — towers, library `SubleqPipeline` route, predicted tensor
-- `tinyapl/biencoder_demo.apl` — seeded demo (flattened with `library.apl` by the runner)
-- `reference/biencoder.py` — exact matmul plus the same SUBLEQ bi-encoder over integers and Goldilocks
+Production arithmetic is **only** extended integers in:
 
-Two towers apply one fixed permutation (`Wq @ Wkᵀ = I`, not fit by a training loop). A late interaction calls the library SUBLEQ pipeline on each query/key pair and masks factors of the dot product. The unmasked head equals exact `A +/∙× B`. The routed head is a sparse approximation; its max absolute error versus that matmul is measured.
+- `j/biencoder.ijs` — J (`jconsole` / `ijconsole`, j9). Matmul is `+/ .*`.
+- `r/biencoder.R` — R with **gmp** `bigz` (never double, never base `%*%` on numeric). `p` does not fit in signed 64-bit, so bit64 is not used.
+
+Python `scripts/run_biencoder.py` is a process launcher. It does not multiply or reduce mod `p`. It exits **non-zero** if the unmasked head disagrees with the printed reference product, shapes disagree, or J and R disagree on the seeded 4×4 case. The SUBLEQ-routed tensor is a separate metric (`routed.max_abs_error`); it is **not** required to be zero and is not treated as a pass of exact matmul.
+
+Two towers apply one fixed permutation (`Wq +/ .* |: Wk = I` in J, the same product in R). Weights are not trained. The late interaction is subtract → compare → predicate → select → route → reduce, and that predicate masks factors of the dot product. The unmasked head must equal exact `A +/ .* B`.
+
+Goldilocks `p = 18446744069414584321` is an extended integer in both J and R. The seeded small products agree with the field product because they do not wrap. A fixed large residue case is reduced in both languages and must agree. `reference/biencoder.py` is retired and raises if imported.
+
+TinyAPL (`tinyapl/biencoder.apl`) is the earlier experiment only. Its scalars are Complex Double and cannot hold `p` (ulp at 2^64 is 4096). It is not the production runtime.
 
 ```bash
+# JCONSOLE and RSCRIPT override discovery. gmp is loaded from ~/R/library when present.
 python3 scripts/run_biencoder.py
-python3 tests/test_biencoder.py
+python3 -m unittest tests.test_biencoder
 ```
 
-`scripts/run_biencoder.py` writes `results/biencoder_result.json`. Exit 0 means TinyAPL and the Python mirror agree and the unmasked head matches exact matmul. `tensor_match.exact_match` is the routed-versus-exact comparison and may be false; `max_abs_error` is the measured integer gap. Full Goldilocks `p` stays in Python (TinyAPL Complex Double cannot hold `p`). If `libncurses.so.6` is missing, the script points `LD_LIBRARY_PATH` at `libncursesw.so.6`.
+The script writes `results/biencoder_result.json` from the integers J and R actually printed.
+
+Sealing for the older reduction-algebra pipeline is a deterministic SHA-256 of canonical JSON bytes in `reference/reduction_algebra.py` (`commit` / `seal` / `verify`). That is not the bi-encoder and not production cryptography. TinyAPL `VerifyStub` is a legacy stub that does not recompute a digest.

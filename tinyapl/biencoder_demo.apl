@@ -1,3 +1,4 @@
+⍝ LEGACY TinyAPL demo. Not parsed by scripts/run_biencoder.py anymore.
 ⍝ Runnable demo. Seeded LCG, fixed permutation weights, SUBLEQ route.
 ⍝ Prints flat row-major tensors. Python scripts/run_biencoder.py parses this.
 ⎕←"BIENCODER_V1"

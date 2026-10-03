@@ -1,3 +1,5 @@
+⍝ LEGACY experiment, not the production runtime. Production arithmetic is j/biencoder.ijs and r/biencoder.R.
+⍝ TinyAPL Complex Double cannot hold Goldilocks p = 18446744069414584321.
 ⍝ Mini SUBLEQ bi-encoder. NOT softmax attention. NOT a trained model.
 ⍝ Query tower: Q ← A +/∙× Wq. Key tower: K ← (⍉B) +/∙× Wk.
 ⍝ Late interaction calls library SubleqPipeline on each (Q row, K row):

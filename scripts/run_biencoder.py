@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Run the SUBLEQ bi-encoder and check the predicted tensor against exact matmul.
+"""Launch the J and R SUBLEQ bi-encoders and compare the integers they print.
 
-Exit 0 when TinyAPL and the Python mirror agree and the unmasked head equals
-A @ B. The routed prediction is a sparse approximation: exact equality with
-matmul is recorded (tensor_match) and is not required for exit 0. Numbers in
-the JSON are computed by this process. Never fabricated.
+Python does not multiply, reduce, or reduce mod p. It only starts the two
+processes, checks that the printed decimal integers agree, and writes that
+record. A nonzero routed error is stored and does not fail the run.
+Exit status is nonzero when the unmasked head disagrees with the printed
+reference matmul, shapes disagree, or J and R disagree on the seeded case.
 """
 from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -17,296 +20,322 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "reference"))
-
-from biencoder import (  # noqa: E402
-    GSAFE_P,
-    K,
-    M,
-    N,
-    SEED,
-    flatten,
-    hand_example,
-    large_field_inputs,
-    matmul,
-    run_seeded,
-    transpose,
-)
-from goldilocks import P as GP  # noqa: E402
-
 PT = ZoneInfo("America/Los_Angeles")
-TINYAPL = ROOT / "vendor" / "tinyapl"
+INT_RE = re.compile(r"-?\d+")
+
+# Labels whose integer grids must be identical on both sides.
+AGREE = (
+    "M",
+    "K",
+    "N",
+    "SEED",
+    "RADIX",
+    "A",
+    "B",
+    "WQ",
+    "WK",
+    "Q",
+    "KTOWER",
+    "PREDICTED",
+    "EXACT_HEAD",
+    "REFERENCE",
+    "AGGREGATES",
+    "PREDICATES",
+    "GSAFE_PREDICTED",
+    "MAX_ABS_ERROR",
+    "EXACT_HEAD_MATCH",
+    "PERMUTATION_INVERSE",
+    "SHAPES_OK",
+    "NOT_SOFTMAX",
+    "GOLDILOCKS_P",
+    "FIELD_SMALL_PREDICTED",
+    "FIELD_SMALL_EXACT_HEAD",
+    "FIELD_SMALL_REFERENCE",
+    "FIELD_SMALL_AGREES",
+    "FIELD_LARGE_PREDICTED",
+    "FIELD_LARGE_EXACT_HEAD",
+    "FIELD_LARGE_REFERENCE",
+    "FIELD_LARGE_EXACT_MATCH",
+    "HAND_PREDICTED",
+    "HAND_EXACT_HEAD",
+    "HAND_REFERENCE",
+    "HAND_MAX_ABS_ERROR",
+    "HAND_EXACT_HEAD_MATCH",
+)
+LABELS = set(AGREE) | {
+    "BIENCODER_V1",
+    "ENGINE",
+    "J_VERSION",
+    "R_VERSION",
+    "GMP_VERSION",
+}
+MATRIX_KEYS = (
+    "A",
+    "B",
+    "WQ",
+    "WK",
+    "Q",
+    "KTOWER",
+    "PREDICTED",
+    "EXACT_HEAD",
+    "REFERENCE",
+    "AGGREGATES",
+    "PREDICATES",
+    "GSAFE_PREDICTED",
+    "FIELD_SMALL_PREDICTED",
+    "FIELD_SMALL_EXACT_HEAD",
+    "FIELD_SMALL_REFERENCE",
+    "FIELD_LARGE_PREDICTED",
+    "FIELD_LARGE_EXACT_HEAD",
+    "FIELD_LARGE_REFERENCE",
+    "HAND_PREDICTED",
+    "HAND_EXACT_HEAD",
+    "HAND_REFERENCE",
+)
 
 
 def now_pt() -> str:
     return datetime.now(PT).strftime("%Y-%m-%d %H:%M:%S PT")
 
 
-def flatten_apl(text: str) -> str:
-    parts = []
-    for line in text.splitlines():
-        if "⍝" in line:
-            line = line[: line.index("⍝")]
-        line = line.strip()
-        if line:
-            parts.append(line)
-    return "⋄".join(parts)
+def find_jconsole() -> str | None:
+    env = os.environ.get("JCONSOLE")
+    if env:
+        return env
+    for name in ("ijconsole", "jconsole"):
+        found = shutil.which(name)
+        if found:
+            return found
+    cands: list[Path] = []
+    cands += sorted(Path.home().glob("j/j*/bin/jconsole"))
+    cands += sorted(Path("/opt").glob("j/j*/bin/jconsole"))
+    cands += sorted(Path("/usr/local").glob("j*/bin/jconsole"))
+    return str(cands[-1]) if cands else None
 
 
-def tinyapl_env() -> dict:
-    env = os.environ.copy()
-    target = Path("/usr/lib/x86_64-linux-gnu/libncursesw.so.6")
-    libdir = Path("/tmp/sra-ncurses")
-    if target.exists():
-        libdir.mkdir(exist_ok=True)
-        link = libdir / "libncurses.so.6"
-        if not link.exists():
-            link.symlink_to(target)
-        prev = env.get("LD_LIBRARY_PATH", "")
-        env["LD_LIBRARY_PATH"] = str(libdir) + ((":" + prev) if prev else "")
-    return env
+def find_rscript() -> str | None:
+    env = os.environ.get("RSCRIPT")
+    if env:
+        return env
+    return shutil.which("Rscript")
 
 
-def run_tinyapl(code: str, timeout: float = 60.0) -> tuple[bool, str, str]:
-    if not TINYAPL.exists():
-        return False, "", "tinyapl binary missing"
-    path = ROOT / "results" / "_tmp_biencoder.apl"
-    path.write_text(code, encoding="utf-8")
+def run_cmd(cmd: list[str], env: dict | None = None, timeout: float = 120.0) -> tuple[int, str, str]:
     try:
-        r = subprocess.run(
-            [str(TINYAPL), str(path)],
+        proc = subprocess.run(
+            cmd,
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=tinyapl_env(),
+            env=env,
+            stdin=subprocess.DEVNULL,
         )
-        err = r.stderr or ""
-        ok = r.returncode == 0 and "Syntax error" not in r.stdout and "error" not in err.lower()
-        # TinyAPL prints domain/rank errors on stdout and still exits 0.
-        if any(tok in r.stdout for tok in ("Syntax error", "Rank error", "Domain error", "Length error", "Index error")):
-            ok = False
-        return ok, r.stdout, err
-    except Exception as e:
-        return False, "", str(e)
+        return proc.returncode, proc.stdout, proc.stderr
+    except subprocess.TimeoutExpired as exc:
+        out = exc.stdout or ""
+        err = (exc.stderr or "") + "\nTIMEOUT"
+        if isinstance(out, bytes):
+            out = out.decode()
+        if isinstance(err, bytes):
+            err = err.decode()
+        return 124, out, err
+    except OSError as exc:
+        return 127, "", str(exc)
 
 
-def parse_apl_ints(line: str) -> list[int]:
-    s = line.strip().replace("¯", "-").replace("⟨", " ").replace("⟩", " ").replace("⋄", " ")
-    s = s.replace("[", " ").replace("]", " ")
-    parts = [p for p in s.split() if p]
-    return [int(p) for p in parts]
-
-
-def parse_labeled(stdout: str) -> dict[str, list[int]]:
-    lines = [ln.strip() for ln in stdout.splitlines() if ln.strip()]
-    wanted = {
-        "M", "K", "N", "SEED", "A", "B", "PREDICTED", "EXACT_HEAD", "REFERENCE",
-        "AGGREGATES", "PREDICATES", "GSAFE_PREDICTED", "MAX_ABS_ERROR",
-        "EXACT_HEAD_MATCH", "NOT_SOFTMAX",
-    }
-    out: dict[str, list[int]] = {}
+def parse_blocks(stdout: str) -> dict[str, list[str]]:
+    lines = [ln.rstrip() for ln in stdout.splitlines()]
+    try:
+        start = lines.index("BIENCODER_V1")
+    except ValueError:
+        return {}
+    lines = lines[start:]
+    out: dict[str, list[str]] = {}
     i = 0
     while i < len(lines):
-        if lines[i] in wanted and i + 1 < len(lines):
-            out[lines[i]] = parse_apl_ints(lines[i + 1])
-            i += 2
+        if lines[i] in LABELS:
+            lab = lines[i]
+            i += 1
+            block: list[str] = []
+            while i < len(lines) and lines[i] not in LABELS:
+                if lines[i].strip():
+                    block.append(lines[i].strip())
+                i += 1
+            out[lab] = block
         else:
             i += 1
     return out
 
 
-def check(name: str, cond: bool, detail: str = "", gates: bool = True) -> dict:
-    return {"name": name, "pass": bool(cond), "detail": detail, "gates_exit": gates}
+def grid(block: list[str] | None) -> list[list[int]] | None:
+    """Parse printed decimals. This does not perform the bi-encoder arithmetic."""
+    if block is None:
+        return None
+    rows: list[list[int]] = []
+    for ln in block:
+        parts = ln.replace("¯", "-").split()
+        nums: list[int] = []
+        for part in parts:
+            if part.startswith("_"):
+                part = "-" + part[1:]
+            if not INT_RE.fullmatch(part):
+                return None
+            nums.append(int(part))
+        rows.append(nums)
+    if rows and any(len(r) != len(rows[0]) for r in rows):
+        return None
+    return rows
 
 
-def residue_distance(a: int, b: int, mod: int) -> int:
-    """Balanced absolute residue of a-b in 0 .. mod//2. Computed, not a float error."""
-    d = (a - b) % mod
-    if d > mod // 2:
-        d = mod - d
-    return d
+def scalar(block: list[str] | None) -> int | None:
+    g = grid(block)
+    if g is None or len(g) != 1 or len(g[0]) != 1:
+        return None
+    return g[0][0]
+
+
+def check(name: str, cond: bool, detail: str = "") -> dict:
+    return {"name": name, "pass": bool(cond), "detail": detail, "gates_exit": True}
+
+
+def shape_of(g: list[list[int]] | None) -> tuple[int, int] | None:
+    if not g or not g[0]:
+        return None
+    return (len(g), len(g[0]))
 
 
 def main() -> int:
-    print("=== SUBLEQ bi-encoder ===")
+    print("=== SUBLEQ bi-encoder (J and R) ===")
     print("time:", now_pt())
-    seeded = run_seeded()
-    hand = hand_example()
+    jbin = find_jconsole()
+    rbin = find_rscript()
     cases: list[dict] = []
+    j_code, j_out, j_err = (127, "", "jconsole not found") if not jbin else run_cmd(
+        [jbin, str(ROOT / "j" / "biencoder.ijs")]
+    )
+    r_env = os.environ.copy()
+    user_lib = str(Path.home() / "R" / "library")
+    if Path(user_lib).is_dir():
+        prev = r_env.get("R_LIBS_USER", "")
+        r_env["R_LIBS_USER"] = user_lib + ((":" + prev) if prev else "")
+    r_code, r_out, r_err = (127, "", "Rscript not found") if not rbin else run_cmd(
+        [rbin, str(ROOT / "r" / "biencoder.R")],
+        env=r_env,
+    )
+    cases.append(check("j.runs", j_code == 0 and "BIENCODER_V1" in j_out and "FLOAT_REFUSED" not in j_out + j_err, (j_err or j_out)[:400]))
+    cases.append(check("r.runs", r_code == 0 and "BIENCODER_V1" in r_out and "FLOAT_REFUSED" not in r_out + r_err, (r_err or r_out)[:400]))
 
-    cases.append(check(
-        "hand.predicted",
-        hand["predicted"] == hand["expected_predicted"],
-        str(hand["predicted"]),
-    ))
-    cases.append(check(
-        "hand.reference",
-        hand["reference"] == hand["expected_reference"] and hand["exact_head"] == hand["expected_reference"],
-    ))
-    cases.append(check(
-        "hand.max_abs_error",
-        hand["max_abs_error"] == hand["expected_max_abs_error"],
-        str(hand["max_abs_error"]),
-    ))
+    jb = parse_blocks(j_out)
+    rb = parse_blocks(r_out)
+    parsed: dict[str, dict[str, list[list[int]] | None]] = {"J": {}, "R": {}}
+    for key in AGREE:
+        gj, gr = grid(jb.get(key)), grid(rb.get(key))
+        parsed["J"][key] = gj
+        parsed["R"][key] = gr
+        cases.append(check(
+            f"agree.{key}",
+            gj is not None and gj == gr,
+            "missing" if gj is None or gr is None else "",
+        ))
 
-    w_ok = matmul(seeded["Wq"], transpose(seeded["Wk"])) == [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
-    cases.append(check("weights.permutation_inverse", w_ok))
-    cases.append(check(
-        "python.exact_head_eq_matmul",
-        seeded["exact_head"] == seeded["reference"] == matmul(seeded["A"], seeded["B"]),
-    ))
+    def flag_ok(side: dict) -> bool:
+        g = side.get("EXACT_HEAD_MATCH")
+        return g == [[1]]
 
-    field_small_match = seeded["field_small"]["predicted"] == seeded["predicted"]
-    cases.append(check(
-        "goldilocks.small_matches_integer",
-        field_small_match,
-        "small products do not wrap mod p" if field_small_match else "mismatch",
-    ))
-    # Large case is computed; just sanity-check shapes and that it differs from a naive int matmul
-    # (at least one entry must be reduced). Do not invent a TinyAPL result for it.
-    large_ref = seeded["field_large"]["reference"]
-    cases.append(check(
-        "goldilocks.large_python_only_shape",
-        len(large_ref) == 4 and len(large_ref[0]) == 4 and all(0 <= x < GP for row in large_ref for x in row),
-    ))
-    cases.append(check(
-        "goldilocks.large_exact_head_eq_reference",
-        seeded["field_large"]["exact_head"] == large_ref,
-    ))
+    jg, rg = parsed["J"], parsed["R"]
+    cases.append(check("exact_head.J_equals_reference", jg.get("EXACT_HEAD") is not None and jg.get("EXACT_HEAD") == jg.get("REFERENCE") and flag_ok(jg)))
+    cases.append(check("exact_head.R_equals_reference", rg.get("EXACT_HEAD") is not None and rg.get("EXACT_HEAD") == rg.get("REFERENCE") and flag_ok(rg)))
+    cases.append(check("exact_head.engines_agree", jg.get("EXACT_HEAD") is not None and jg.get("EXACT_HEAD") == rg.get("EXACT_HEAD")))
 
-    lib = flatten_apl((ROOT / "tinyapl" / "library.apl").read_text(encoding="utf-8"))
-    enc = flatten_apl((ROOT / "tinyapl" / "biencoder.apl").read_text(encoding="utf-8"))
-    demo = flatten_apl((ROOT / "tinyapl" / "biencoder_demo.apl").read_text(encoding="utf-8"))
-    ok, stdout, err = run_tinyapl(lib + "⋄" + enc + "⋄" + demo)
-    parsed = parse_labeled(stdout) if ok else {}
-    cases.append(check("tinyapl.runs", ok, (err or stdout)[:400]))
+    m, k, n = scalar(jb.get("M")), scalar(jb.get("K")), scalar(jb.get("N"))
+    shapes_ok = (
+        m == 4 and k == 4 and n == 4
+        and shape_of(jg.get("A")) == (m, k)
+        and shape_of(jg.get("B")) == (k, n)
+        and shape_of(jg.get("EXACT_HEAD")) == (m, n)
+        and shape_of(jg.get("PREDICTED")) == (m, n)
+        and shape_of(jg.get("REFERENCE")) == (m, n)
+        and shape_of(jg.get("PREDICATES")) == (m * n, k)
+        and jg.get("SHAPES_OK") == [[1]]
+        and rg.get("SHAPES_OK") == [[1]]
+    )
+    cases.append(check("shapes", shapes_ok, f"M={m} K={k} N={n}"))
+    cases.append(check("permutation_inverse", jg.get("PERMUTATION_INVERSE") == [[1]] and rg.get("PERMUTATION_INVERSE") == [[1]]))
+    cases.append(check("goldilocks.small_integer_agreement", jg.get("FIELD_SMALL_AGREES") == [[1]] and rg.get("FIELD_SMALL_AGREES") == [[1]] and jg.get("FIELD_SMALL_PREDICTED") == jg.get("PREDICTED")))
+    cases.append(check("goldilocks.large_exact_head", jg.get("FIELD_LARGE_EXACT_MATCH") == [[1]] and rg.get("FIELD_LARGE_EXACT_MATCH") == [[1]] and jg.get("FIELD_LARGE_EXACT_HEAD") == jg.get("FIELD_LARGE_REFERENCE")))
+    cases.append(check("goldilocks.p", scalar(jb.get("GOLDILOCKS_P")) == 18446744069414584321 and jg.get("GOLDILOCKS_P") == rg.get("GOLDILOCKS_P")))
+    cases.append(check("hand.exact_head", jg.get("HAND_EXACT_HEAD_MATCH") == [[1]] and jg.get("HAND_EXACT_HEAD") == jg.get("HAND_REFERENCE") == rg.get("HAND_REFERENCE")))
+    cases.append(check("not_softmax", jg.get("NOT_SOFTMAX") == [[1]] and rg.get("NOT_SOFTMAX") == [[1]]))
 
-    tiny_pred = parsed.get("PREDICTED")
-    tiny_exact = parsed.get("EXACT_HEAD")
-    tiny_ref = parsed.get("REFERENCE")
-    tiny_err = parsed.get("MAX_ABS_ERROR")
-    tiny_agg = parsed.get("AGGREGATES")
-    tiny_pred_mask = parsed.get("PREDICATES")
-    tiny_gsafe = parsed.get("GSAFE_PREDICTED")
-    tiny_match = parsed.get("EXACT_HEAD_MATCH")
-    tiny_a = parsed.get("A")
-    tiny_b = parsed.get("B")
+    routed_err = scalar(jb.get("MAX_ABS_ERROR"))
+    hand_err = scalar(jb.get("HAND_MAX_ABS_ERROR"))
+    # Routed gap is a metric. It is not a pass/fail of exact matmul.
+    routed = {
+        "max_abs_error": routed_err,
+        "hand_max_abs_error": hand_err,
+        "equals_exact_matmul": routed_err == 0,
+        "required_zero": False,
+        "gates_exit": False,
+        "note": "SUBLEQ-routed prediction is a sparse approximation. Nonzero error does not fail the run.",
+    }
 
-    py_pred = flatten(seeded["predicted"])
-    py_exact = flatten(seeded["exact_head"])
-    py_ref = flatten(seeded["reference"])
-    py_agg = flatten(seeded["aggregates"])
-    py_mask = [x for row in seeded["predicates"] for x in row]
-    py_gsafe = flatten(seeded["gsafe_predicted"])
-    py_a = flatten(seeded["A"])
-    py_b = flatten(seeded["B"])
-
-    if ok:
-        cases.append(check("tinyapl.shapes", parsed.get("M") == [M] and parsed.get("K") == [K] and parsed.get("N") == [N] and parsed.get("SEED") == [SEED]))
-        cases.append(check("tinyapl.inputs", tiny_a == py_a and tiny_b == py_b))
-        cases.append(check("tinyapl.predicted_matches_python", tiny_pred == py_pred, f"tiny={tiny_pred} py={py_pred}"))
-        cases.append(check("tinyapl.exact_head_matches_python", tiny_exact == py_exact == py_ref))
-        cases.append(check("tinyapl.reference_matches_python", tiny_ref == py_ref))
-        cases.append(check("tinyapl.max_abs_error", tiny_err == [seeded["max_abs_error"]], str(tiny_err)))
-        cases.append(check("tinyapl.aggregates", tiny_agg == py_agg, f"tiny={tiny_agg} py={py_agg}"))
-        cases.append(check("tinyapl.predicates", tiny_pred_mask == py_mask))
-        cases.append(check("tinyapl.gsafe", tiny_gsafe == py_gsafe))
-        cases.append(check("tinyapl.exact_head_flag", tiny_match == [1]))
-        cases.append(check("tinyapl.not_softmax_flag", parsed.get("NOT_SOFTMAX") == [1]))
-        cases.append(check("subleq.path_executed", tiny_agg is not None and len(tiny_agg) == M * N and tiny_pred_mask is not None and len(tiny_pred_mask) == M * N * K))
-
-    exact_match = seeded["predicted"] == seeded["reference"]
-    tensor_detail = f"max_abs_error={seeded['max_abs_error']}"
-    cases.append(check(
-        "tensor_match.predicted_vs_exact_matmul",
-        exact_match,
-        tensor_detail + " (recorded; does not gate exit)",
-        gates=False,
-    ))
-
-    # Exit status is about algorithm agreement. Whether the sparse SUBLEQ
-    # route equals full matmul is tensor_match and does not gate the exit.
-    failed_gates = [c for c in cases if c.get("gates_exit", True) and not c["pass"]]
-    overall = len(failed_gates) == 0 and ok
-
+    exact_head_match = (
+        jg.get("EXACT_HEAD") is not None
+        and jg.get("EXACT_HEAD") == jg.get("REFERENCE") == rg.get("EXACT_HEAD")
+        and flag_ok(jg)
+        and flag_ok(rg)
+    )
+    failed = [c for c in cases if not c["pass"]]
+    overall = len(failed) == 0
     for c in cases:
         mark = "OK" if c["pass"] else "FAIL"
-        extra = ""
-        if not c["pass"] or c["name"].startswith("tensor_match"):
-            extra = f" — {c['detail']}" if c["detail"] else ""
+        extra = f" — {c['detail']}" if (not c["pass"] and c["detail"]) else ""
         print(f"  [{mark}] {c['name']}{extra}")
+    print("routed max_abs_error:", routed_err, "(not required to be 0)")
+    print("hand routed max_abs_error:", hand_err)
+
+    def side_record(blocks: dict, grids: dict) -> dict:
+        return {
+            "engine_line": blocks.get("ENGINE"),
+            "version": (blocks.get("J_VERSION") or blocks.get("R_VERSION") or [None])[0],
+            "gmp_version": (blocks.get("GMP_VERSION") or [None])[0],
+            "matrices": {key: grids.get(key) for key in MATRIX_KEYS},
+            "max_abs_error": scalar(blocks.get("MAX_ABS_ERROR")),
+            "exact_head_match": scalar(blocks.get("EXACT_HEAD_MATCH")) == 1,
+            "permutation_inverse": scalar(blocks.get("PERMUTATION_INVERSE")) == 1,
+            "field_small_agrees": scalar(blocks.get("FIELD_SMALL_AGREES")) == 1,
+            "field_large_exact_match": scalar(blocks.get("FIELD_LARGE_EXACT_MATCH")) == 1,
+        }
 
     result = {
-        "schema_version": "1.0.0",
+        "schema_version": "2.0.0",
         "timestamp_pt": now_pt(),
         "note": (
-            "SUBLEQ bi-encoder is not softmax attention. Weights are a fixed "
-            "permutation, not trained. Predicted tensor is the SUBLEQ-routed "
-            "dot product. exact_head is the unmasked contraction and must equal "
-            "reference matmul. Full Goldilocks p is Python-only."
+            "SUBLEQ bi-encoder is not softmax attention and not a trained model. "
+            "Arithmetic ran in J and R extended integers. Python only launched the "
+            "processes and compared the printed decimals. The routed tensor is a "
+            "separate metric; a nonzero max abs error is not a failure of the "
+            "unmasked head. TinyAPL is legacy because Complex Double cannot hold p."
         ),
-        "shapes": {"M": M, "K": K, "N": N, "D": K},
-        "seed": SEED,
-        "radix": 5,
-        "A": seeded["A"],
-        "B": seeded["B"],
-        "Wq": seeded["Wq"],
-        "Wk": seeded["Wk"],
-        "reference_matmul": seeded["reference"],
-        "predicted": seeded["predicted"],
-        "exact_head": seeded["exact_head"],
-        "subleq_aggregates": seeded["aggregates"],
-        "predicates_per_pair": seeded["predicates"],
-        "gsafe_predicted": seeded["gsafe_predicted"],
-        "gsafe_p": GSAFE_P,
-        "tensor_match": {
-            "exact_match": exact_match,
-            "max_abs_error": seeded["max_abs_error"],
-            "compared": "predicted (SUBLEQ-routed) vs exact A@B",
-        },
-        "tinyapl": {
-            "ran": ok,
-            "matches_python_mirror": ok and tiny_pred == py_pred and tiny_exact == py_exact and tiny_agg == py_agg,
-            "stdout": stdout if ok else stdout[:2000],
-            "stderr": err[:2000],
-            "parsed_max_abs_error": tiny_err[0] if tiny_err else None,
-        },
-        "goldilocks": {
-            "p": str(GP),
-            "small_integer_case_matches_field": field_small_match,
-            "small_field_predicted": seeded["field_small"]["predicted"],
-            "large_case_tinyapl_executed": False,
-            "large_case_reason": (
-                "TinyAPL Complex Double cannot represent p=2^64-2^32+1 as an exact "
-                "distinct scalar (ulp at 2^64 is 4096). Large residues were reduced "
-                "only in reference/biencoder.py."
-            ),
-            "large_A": large_field_inputs()[0],
-            "large_B": large_field_inputs()[1],
-            "large_reference_matmul": seeded["field_large"]["reference"],
-            "large_predicted": seeded["field_large"]["predicted"],
-            "large_exact_head": seeded["field_large"]["exact_head"],
-            "large_mismatch_count": sum(
-                p != r for p, r in zip(
-                    flatten(seeded["field_large"]["predicted"]),
-                    flatten(seeded["field_large"]["reference"]),
-                )
-            ),
-            "large_max_balanced_residue_distance": max(
-                residue_distance(p, r, GP) for p, r in zip(
-                    flatten(seeded["field_large"]["predicted"]),
-                    flatten(seeded["field_large"]["reference"]),
-                )
-            ),
-        },
-        "hand_example": {
-            "predicted": hand["predicted"],
-            "reference": hand["reference"],
-            "max_abs_error": hand["max_abs_error"],
-        },
+        "jconsole": jbin,
+        "rscript": rbin,
+        "j_version": (jb.get("J_VERSION") or [None])[0],
+        "r_version": (rb.get("R_VERSION") or [None])[0],
+        "gmp_version": (rb.get("GMP_VERSION") or [None])[0],
+        "seed": scalar(jb.get("SEED")),
+        "shapes": {"M": m, "K": k, "N": n},
+        "exact_head_match": exact_head_match,
+        "permutation_inverse": jg.get("PERMUTATION_INVERSE") == [[1]] and rg.get("PERMUTATION_INVERSE") == [[1]],
+        "goldilocks_p": str(scalar(jb.get("GOLDILOCKS_P"))) if scalar(jb.get("GOLDILOCKS_P")) is not None else None,
+        "goldilocks_small_agrees": jg.get("FIELD_SMALL_AGREES") == [[1]] and rg.get("FIELD_SMALL_AGREES") == [[1]],
+        "routed": routed,
+        "J": side_record(jb, jg),
+        "R": side_record(rb, rg),
+        "stdout": {"J": j_out, "R": r_out},
+        "stderr": {"J": j_err, "R": r_err},
         "correctness": {
             "passed": sum(1 for c in cases if c["pass"]),
-            "failed": sum(1 for c in cases if not c["pass"]),
+            "failed": len(failed),
             "cases": cases,
         },
         "overall_pass": overall,
@@ -314,7 +343,6 @@ def main() -> int:
     out_path = ROOT / "results" / "biencoder_result.json"
     out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print("wrote", out_path)
-    print("tensor_match exact:", exact_match, "max_abs_error:", seeded["max_abs_error"])
     print("overall_pass:", overall)
     return 0 if overall else 1
 
