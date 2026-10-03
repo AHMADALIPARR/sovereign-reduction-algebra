@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0.0",
-  "timestamp_pt": "2026-10-02 22:17:07 PT",
-  "note": "SUBLEQ bi-encoder is not softmax attention and not a trained model. Arithmetic ran in J and R extended integers. Python only launched the processes and compared the printed decimals. The routed tensor is a separate metric; a nonzero max abs error is not a failure of the unmasked head. TinyAPL is legacy because Complex Double cannot hold p.",
+  "timestamp_pt": "2026-10-02 22:36:44 PT",
+  "note": "SUBLEQ bi-encoder is not softmax attention and not a trained model. Arithmetic ran in J and R extended integers. Python only launched the processes and compared the printed decimals. The routed tensor is a separate metric; a nonzero max abs error is not a failure of the unmasked head. The production seal is a SHA-512 DAG computed in J and in R over canonical integer tensors (exact head, routed prediction, weights, prime). Python does not hash. TinyAPL is legacy because Complex Double cannot hold p.",
   "jconsole": "/home/box/j/j9.7/bin/jconsole",
   "rscript": "/usr/bin/Rscript",
   "j_version": "j9.7.1/j64/linux/commercial/www.jsoftware.com/2026-04-06T04:00:54/clang-14-0-0/SLEEF=0",
@@ -24,6 +24,33 @@
     "required_zero": false,
     "gates_exit": false,
     "note": "SUBLEQ-routed prediction is a sparse approximation. Nonzero error does not fail the run."
+  },
+  "seal": {
+    "algorithm": "SHA-512",
+    "dag_order": [
+      "exact_head",
+      "predicted",
+      "weights",
+      "prime"
+    ],
+    "J": "e6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e",
+    "R": "e6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e",
+    "agree": true,
+    "verify": true,
+    "mutated_seal": {
+      "J": "fe52068916fa60f4b75e1130120b0973e9f6a641461ed18fd25a650504b618a0277bf707e0506d754188ac0074449f994e3957736312253524de0e240c5945d1",
+      "R": "fe52068916fa60f4b75e1130120b0973e9f6a641461ed18fd25a650504b618a0277bf707e0506d754188ac0074449f994e3957736312253524de0e240c5945d1"
+    },
+    "verify_mutated": 0,
+    "neg_seal": {
+      "J": "c56afd8d12695daf5129db682b9eca0556465ba7ed00b8029b7fb85362c1c0530341a512454320c371ee38397d90dd9e1199bd7f705ab763077c05a6e8857a1e",
+      "R": "c56afd8d12695daf5129db682b9eca0556465ba7ed00b8029b7fb85362c1c0530341a512454320c371ee38397d90dd9e1199bd7f705ab763077c05a6e8857a1e"
+    }
+  },
+  "sha512_kat": {
+    "empty": "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+    "abc": "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f",
+    "long": "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909"
   },
   "J": {
     "engine_line": [
@@ -1194,15 +1221,15 @@
     "field_large_exact_match": true
   },
   "stdout": {
-    "J": "BIENCODER_V1\nENGINE\nJ\nJ_VERSION\nj9.7.1/j64/linux/commercial/www.jsoftware.com/2026-04-06T04:00:54/clang-14-0-0/SLEEF=0\nM\n4\nK\n4\nN\n4\nSEED\n20261002\nRADIX\n5\nA\n2 4 0 0\n3 3 0 4\n3 3 3 2\n2 1 2 0\nB\n1 3 2 2\n4 3 2 3\n0 3 2 4\n2 1 0 1\nWQ\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nWK\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nQ\n0 2 4 0\n4 3 3 0\n2 3 3 3\n0 2 1 2\nKTOWER\n2 1 4 0\n1 3 3 3\n0 2 2 2\n1 2 3 4\nPREDICTED\n18 12 12 16\n11 22 12 19\n 7 29 18 17\n 2  0  8  4\nEXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nREFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nAGGREGATES\n-1 -1 -2 -1\n-4 -3 -6 -4\n-5 -1 -5 -2\n-3  0  0  0\nPREDICATES\n0 1 1 1\n0 0 1 0\n1 1 1 0\n0 1 1 0\n1 1 0 1\n1 1 1 0\n1 1 1 0\n1 1 1 0\n1 1 0 1\n1 1 1 1\n1 1 1 1\n1 1 1 0\n0 1 0 1\n0 0 0 0\n1 1 0 1\n0 1 0 0\nGSAFE_PREDICTED\n18 12 12 16\n11 22 12 19\n 7 29 18 17\n 2  0  8  4\nMAX_ABS_ERROR\n15\nEXACT_HEAD_MATCH\n1\nPERMUTATION_INVERSE\n1\nSHAPES_OK\n1\nNOT_SOFTMAX\n1\nGOLDILOCKS_P\n18446744069414584321\nFIELD_SMALL_PREDICTED\n18 12 12 16\n11 22 12 19\n 7 29 18 17\n 2  0  8  4\nFIELD_SMALL_EXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nFIELD_SMALL_REFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nFIELD_SMALL_AGREES\n1\nFIELD_LARGE_PREDICTED\n                  58                   17                   22 18446744069414584307\n                  53                   33                   33 18446744069414584310\n18446744069414584289                   33                   54 18446744069414584317\n                   4 18446744069414584316 18446744069414584297                   33\nFIELD_LARGE_EXACT_HEAD\n82 21                   16                    6\n23 54                   33 18446744069414584285\n15 25                   54 18446744069414584320\n13 18 18446744069414584285                   39\nFIELD_LARGE_REFERENCE\n82 21                   16                    6\n23 54                   33 18446744069414584285\n15 25                   54 18446744069414584320\n13 18 18446744069414584285                   39\nFIELD_LARGE_EXACT_MATCH\n1\nHAND_PREDICTED\n7 5\n4 9\nHAND_EXACT_HEAD\n7 7\n6 9\nHAND_REFERENCE\n7 7\n6 9\nHAND_MAX_ABS_ERROR\n2\nHAND_EXACT_HEAD_MATCH\n1\n",
-    "R": "BIENCODER_V1\nENGINE\nR\nR_VERSION\nR version 4.5.0 (2025-04-11)\nGMP_VERSION\n0.7.5.1\nM\n4\nK\n4\nN\n4\nSEED\n20261002\nRADIX\n5\nA\n2 4 0 0\n3 3 0 4\n3 3 3 2\n2 1 2 0\nB\n1 3 2 2\n4 3 2 3\n0 3 2 4\n2 1 0 1\nWQ\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nWK\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nQ\n0 2 4 0\n4 3 3 0\n2 3 3 3\n0 2 1 2\nKTOWER\n2 1 4 0\n1 3 3 3\n0 2 2 2\n1 2 3 4\nPREDICTED\n18 12 12 16\n11 22 12 19\n7 29 18 17\n2 0 8 4\nEXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nREFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nAGGREGATES\n-1 -1 -2 -1\n-4 -3 -6 -4\n-5 -1 -5 -2\n-3 0 0 0\nPREDICATES\n0 1 1 1\n0 0 1 0\n1 1 1 0\n0 1 1 0\n1 1 0 1\n1 1 1 0\n1 1 1 0\n1 1 1 0\n1 1 0 1\n1 1 1 1\n1 1 1 1\n1 1 1 0\n0 1 0 1\n0 0 0 0\n1 1 0 1\n0 1 0 0\nGSAFE_PREDICTED\n18 12 12 16\n11 22 12 19\n7 29 18 17\n2 0 8 4\nMAX_ABS_ERROR\n15\nEXACT_HEAD_MATCH\n1\nPERMUTATION_INVERSE\n1\nSHAPES_OK\n1\nNOT_SOFTMAX\n1\nGOLDILOCKS_P\n18446744069414584321\nFIELD_SMALL_PREDICTED\n18 12 12 16\n11 22 12 19\n7 29 18 17\n2 0 8 4\nFIELD_SMALL_EXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nFIELD_SMALL_REFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nFIELD_SMALL_AGREES\n1\nFIELD_LARGE_PREDICTED\n58 17 22 18446744069414584307\n53 33 33 18446744069414584310\n18446744069414584289 33 54 18446744069414584317\n4 18446744069414584316 18446744069414584297 33\nFIELD_LARGE_EXACT_HEAD\n82 21 16 6\n23 54 33 18446744069414584285\n15 25 54 18446744069414584320\n13 18 18446744069414584285 39\nFIELD_LARGE_REFERENCE\n82 21 16 6\n23 54 33 18446744069414584285\n15 25 54 18446744069414584320\n13 18 18446744069414584285 39\nFIELD_LARGE_EXACT_MATCH\n1\nHAND_PREDICTED\n7 5\n4 9\nHAND_EXACT_HEAD\n7 7\n6 9\nHAND_REFERENCE\n7 7\n6 9\nHAND_MAX_ABS_ERROR\n2\nHAND_EXACT_HEAD_MATCH\n1\n"
+    "J": "BIENCODER_V1\nENGINE\nJ\nJ_VERSION\nj9.7.1/j64/linux/commercial/www.jsoftware.com/2026-04-06T04:00:54/clang-14-0-0/SLEEF=0\nM\n4\nK\n4\nN\n4\nSEED\n20261002\nRADIX\n5\nA\n2 4 0 0\n3 3 0 4\n3 3 3 2\n2 1 2 0\nB\n1 3 2 2\n4 3 2 3\n0 3 2 4\n2 1 0 1\nWQ\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nWK\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nQ\n0 2 4 0\n4 3 3 0\n2 3 3 3\n0 2 1 2\nKTOWER\n2 1 4 0\n1 3 3 3\n0 2 2 2\n1 2 3 4\nPREDICTED\n18 12 12 16\n11 22 12 19\n 7 29 18 17\n 2  0  8  4\nEXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nREFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nAGGREGATES\n-1 -1 -2 -1\n-4 -3 -6 -4\n-5 -1 -5 -2\n-3  0  0  0\nPREDICATES\n0 1 1 1\n0 0 1 0\n1 1 1 0\n0 1 1 0\n1 1 0 1\n1 1 1 0\n1 1 1 0\n1 1 1 0\n1 1 0 1\n1 1 1 1\n1 1 1 1\n1 1 1 0\n0 1 0 1\n0 0 0 0\n1 1 0 1\n0 1 0 0\nGSAFE_PREDICTED\n18 12 12 16\n11 22 12 19\n 7 29 18 17\n 2  0  8  4\nMAX_ABS_ERROR\n15\nEXACT_HEAD_MATCH\n1\nPERMUTATION_INVERSE\n1\nSHAPES_OK\n1\nNOT_SOFTMAX\n1\nGOLDILOCKS_P\n18446744069414584321\nFIELD_SMALL_PREDICTED\n18 12 12 16\n11 22 12 19\n 7 29 18 17\n 2  0  8  4\nFIELD_SMALL_EXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nFIELD_SMALL_REFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n 6 15 10 15\nFIELD_SMALL_AGREES\n1\nFIELD_LARGE_PREDICTED\n                  58                   17                   22 18446744069414584307\n                  53                   33                   33 18446744069414584310\n18446744069414584289                   33                   54 18446744069414584317\n                   4 18446744069414584316 18446744069414584297                   33\nFIELD_LARGE_EXACT_HEAD\n82 21                   16                    6\n23 54                   33 18446744069414584285\n15 25                   54 18446744069414584320\n13 18 18446744069414584285                   39\nFIELD_LARGE_REFERENCE\n82 21                   16                    6\n23 54                   33 18446744069414584285\n15 25                   54 18446744069414584320\n13 18 18446744069414584285                   39\nFIELD_LARGE_EXACT_MATCH\n1\nHAND_PREDICTED\n7 5\n4 9\nHAND_EXACT_HEAD\n7 7\n6 9\nHAND_REFERENCE\n7 7\n6 9\nHAND_MAX_ABS_ERROR\n2\nHAND_EXACT_HEAD_MATCH\n1\nSHA512_EMPTY\ncf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e\nSHA512_ABC\nddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f\nSHA512_LONG\n8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909\nSEAL\ne6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e\nVERIFY\n1\nMUTATED_SEAL\nfe52068916fa60f4b75e1130120b0973e9f6a641461ed18fd25a650504b618a0277bf707e0506d754188ac0074449f994e3957736312253524de0e240c5945d1\nVERIFY_MUTATED\n0\nNEG_SEAL\nc56afd8d12695daf5129db682b9eca0556465ba7ed00b8029b7fb85362c1c0530341a512454320c371ee38397d90dd9e1199bd7f705ab763077c05a6e8857a1e\n",
+    "R": "BIENCODER_V1\nENGINE\nR\nR_VERSION\nR version 4.5.0 (2025-04-11)\nGMP_VERSION\n0.7.5.1\nM\n4\nK\n4\nN\n4\nSEED\n20261002\nRADIX\n5\nA\n2 4 0 0\n3 3 0 4\n3 3 3 2\n2 1 2 0\nB\n1 3 2 2\n4 3 2 3\n0 3 2 4\n2 1 0 1\nWQ\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nWK\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nQ\n0 2 4 0\n4 3 3 0\n2 3 3 3\n0 2 1 2\nKTOWER\n2 1 4 0\n1 3 3 3\n0 2 2 2\n1 2 3 4\nPREDICTED\n18 12 12 16\n11 22 12 19\n7 29 18 17\n2 0 8 4\nEXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nREFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nAGGREGATES\n-1 -1 -2 -1\n-4 -3 -6 -4\n-5 -1 -5 -2\n-3 0 0 0\nPREDICATES\n0 1 1 1\n0 0 1 0\n1 1 1 0\n0 1 1 0\n1 1 0 1\n1 1 1 0\n1 1 1 0\n1 1 1 0\n1 1 0 1\n1 1 1 1\n1 1 1 1\n1 1 1 0\n0 1 0 1\n0 0 0 0\n1 1 0 1\n0 1 0 0\nGSAFE_PREDICTED\n18 12 12 16\n11 22 12 19\n7 29 18 17\n2 0 8 4\nMAX_ABS_ERROR\n15\nEXACT_HEAD_MATCH\n1\nPERMUTATION_INVERSE\n1\nSHAPES_OK\n1\nNOT_SOFTMAX\n1\nGOLDILOCKS_P\n18446744069414584321\nFIELD_SMALL_PREDICTED\n18 12 12 16\n11 22 12 19\n7 29 18 17\n2 0 8 4\nFIELD_SMALL_EXACT_HEAD\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nFIELD_SMALL_REFERENCE\n18 18 12 16\n23 22 12 19\n19 29 18 29\n6 15 10 15\nFIELD_SMALL_AGREES\n1\nFIELD_LARGE_PREDICTED\n58 17 22 18446744069414584307\n53 33 33 18446744069414584310\n18446744069414584289 33 54 18446744069414584317\n4 18446744069414584316 18446744069414584297 33\nFIELD_LARGE_EXACT_HEAD\n82 21 16 6\n23 54 33 18446744069414584285\n15 25 54 18446744069414584320\n13 18 18446744069414584285 39\nFIELD_LARGE_REFERENCE\n82 21 16 6\n23 54 33 18446744069414584285\n15 25 54 18446744069414584320\n13 18 18446744069414584285 39\nFIELD_LARGE_EXACT_MATCH\n1\nHAND_PREDICTED\n7 5\n4 9\nHAND_EXACT_HEAD\n7 7\n6 9\nHAND_REFERENCE\n7 7\n6 9\nHAND_MAX_ABS_ERROR\n2\nHAND_EXACT_HEAD_MATCH\n1\nSHA512_EMPTY\ncf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e\nSHA512_ABC\nddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f\nSHA512_LONG\n8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909\nSEAL\ne6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e\nVERIFY\n1\nMUTATED_SEAL\nfe52068916fa60f4b75e1130120b0973e9f6a641461ed18fd25a650504b618a0277bf707e0506d754188ac0074449f994e3957736312253524de0e240c5945d1\nVERIFY_MUTATED\n0\nNEG_SEAL\nc56afd8d12695daf5129db682b9eca0556465ba7ed00b8029b7fb85362c1c0530341a512454320c371ee38397d90dd9e1199bd7f705ab763077c05a6e8857a1e\n"
   },
   "stderr": {
     "J": "",
     "R": ""
   },
   "correctness": {
-    "passed": 48,
+    "passed": 62,
     "failed": 0,
     "cases": [
       {
@@ -1215,6 +1242,66 @@
         "name": "r.runs",
         "pass": true,
         "detail": "BIENCODER_V1\nENGINE\nR\nR_VERSION\nR version 4.5.0 (2025-04-11)\nGMP_VERSION\n0.7.5.1\nM\n4\nK\n4\nN\n4\nSEED\n20261002\nRADIX\n5\nA\n2 4 0 0\n3 3 0 4\n3 3 3 2\n2 1 2 0\nB\n1 3 2 2\n4 3 2 3\n0 3 2 4\n2 1 0 1\nWQ\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nWK\n0 1 0 0\n0 0 1 0\n0 0 0 1\n1 0 0 0\nQ\n0 2 4 0\n4 3 3 0\n2 3 3 3\n0 2 1 2\nKTOWER\n2 1 4 0\n1 3 3 3\n0 2 2 2\n1 2 3 4\nPREDICTED\n18 12 12 16\n11 22 12 19\n7 29 18 17\n2 0 8 4\nEXACT_HEAD\n18 18 12 1",
+        "gates_exit": true
+      },
+      {
+        "name": "agree.SHA512_EMPTY",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "agree.SHA512_ABC",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "agree.SHA512_LONG",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "agree.SEAL",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "agree.MUTATED_SEAL",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "agree.NEG_SEAL",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "sha512.empty",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "sha512.abc",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "sha512.long",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "seal.differs_when_tensor_mutated",
+        "pass": true,
+        "detail": "",
         "gates_exit": true
       },
       {
@@ -1434,6 +1521,18 @@
         "gates_exit": true
       },
       {
+        "name": "agree.VERIFY",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "agree.VERIFY_MUTATED",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
         "name": "exact_head.J_equals_reference",
         "pass": true,
         "detail": "",
@@ -1489,6 +1588,18 @@
       },
       {
         "name": "not_softmax",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "seal.verify",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "seal.verify_mutated_fails",
         "pass": true,
         "detail": "",
         "gates_exit": true

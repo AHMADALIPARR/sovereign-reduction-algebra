@@ -3,7 +3,7 @@
 ⍝ Sovereign Reduction Algebra — TinyAPL primitives
 ⍝ File-mode note: Capitals name functions; locals must be lowercase.
 ⍝ Goldilocks: full p via Python reference. TinyAPL uses exact GSafeP=2^26-1.
-⍝ Crypto stubs — authoritative commit/seal/verify live in Python reference.
+⍝ Legacy crypto stub. Production SHA-512 DAG seal is j/sha512.ijs and r/sha512.R.
 Canonicalize←⍕
 CommitStub←Canonicalize
 SealStub←Canonicalize

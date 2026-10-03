@@ -11,4 +11,4 @@ GSafeReduce←{gSafeP|+/⍵}
 GSafeScan←{gSafeP|¨ScanSum ⍵}
 GSafeDot←{gSafeP|+/⍺×⍵}
 GSafePoly3←{x←⍵⋄c0←0⊇⍺⋄c1←1⊇⍺⋄c2←2⊇⍺⋄(((c2 GSafeMul x)GSafeAdd c1)GSafeMul x)GSafeAdd c0}
-⍝ Crypto stubs — authoritative commit/seal/verify live in Python reference.
+⍝ Legacy crypto stub. Production SHA-512 DAG seal is j/sha512.ijs and r/sha512.R.

@@ -28,4 +28,4 @@ PairSum←{n←≢⍵⋄e←⌊n÷2⋄(+/◡(e,2)⍴(2×e)↑⍵)⍪(2×e)↓⍵
 TreeReduceSumSafe←{n←≢⍵⋄0=n:⟨0⋄0⟩⋄1=n:⟨⊃⍵⋄0⟩⋄val←⊃PairSum⍣{1=≢⍵}⍵⋄depth←⌈2⍟n⋄⟨val⋄depth⟩}
 SegmentedReduceSum←{parts←⍺⊆⍵⋄(+/)¨parts}
 ⍝ Goldilocks: full p via Python reference. TinyAPL uses exact GSafeP=2^26-1.
-⍝ Crypto stubs — authoritative commit/seal/verify live in Python reference.
+⍝ Legacy crypto stub. Production SHA-512 DAG seal is j/sha512.ijs and r/sha512.R.

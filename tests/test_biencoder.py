@@ -79,6 +79,28 @@ class TestJAndRBiencoder(unittest.TestCase):
         self.assertIn("not softmax", self.data["note"])
         self.assertNotIn("trained softmax", self.data["note"])
 
+    def test_sha512_dag_seal_agrees_and_mutation_fails(self):
+        seal = self.data["seal"]
+        self.assertTrue(seal["agree"])
+        self.assertEqual(seal["J"], seal["R"])
+        self.assertEqual(len(seal["J"]), 128)
+        self.assertEqual(seal["dag_order"], ["exact_head", "predicted", "weights", "prime"])
+        self.assertTrue(seal["verify"])
+        self.assertEqual(seal["verify_mutated"], 0)
+        self.assertEqual(seal["mutated_seal"]["J"], seal["mutated_seal"]["R"])
+        self.assertNotEqual(seal["J"], seal["mutated_seal"]["J"])
+        self.assertEqual(seal["neg_seal"]["J"], seal["neg_seal"]["R"])
+        kat = self.data["sha512_kat"]
+        self.assertEqual(
+            kat["empty"],
+            "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+        )
+        self.assertEqual(
+            kat["abc"],
+            "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f",
+        )
+        self.assertNotIn("sha256", self.data["note"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,4 +11,4 @@ R4←SegmentedReduceSum
 R5←Sum
 R6←{⟨GSafeReduce ⍵⋄0⌈(≢⍵)-1⟩}
 R7←{diff←gSafeP|⍵-⍺⋄half←⌊gSafeP÷2⋄signed←diff-gSafeP×diff>half⋄pred←signed≤0⋄routed←pred×diff⋄⟨GSafeReduce routed⋄0⌈(≢⍺)-1⋄pred⋄routed⟩}
-⍝ Crypto stubs — authoritative commit/seal/verify live in Python reference.
+⍝ Legacy crypto stub. Production SHA-512 DAG seal is j/sha512.ijs and r/sha512.R.

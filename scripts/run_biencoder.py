@@ -5,7 +5,7 @@ Python does not multiply, reduce, or reduce mod p. It only starts the two
 processes, checks that the printed decimal integers agree, and writes that
 record. A nonzero routed error is stored and does not fail the run.
 Exit status is nonzero when the unmasked head disagrees with the printed
-reference matmul, shapes disagree, or J and R disagree on the seeded case.
+reference matmul, shapes disagree, J and R disagree on the seeded case, or the SHA-512 DAG seals differ.
 """
 from __future__ import annotations
 
@@ -61,6 +61,8 @@ AGREE = (
     "HAND_REFERENCE",
     "HAND_MAX_ABS_ERROR",
     "HAND_EXACT_HEAD_MATCH",
+    "VERIFY",
+    "VERIFY_MUTATED",
 )
 LABELS = set(AGREE) | {
     "BIENCODER_V1",
@@ -68,7 +70,25 @@ LABELS = set(AGREE) | {
     "J_VERSION",
     "R_VERSION",
     "GMP_VERSION",
+    "SHA512_EMPTY",
+    "SHA512_ABC",
+    "SHA512_LONG",
+    "SEAL",
+    "MUTATED_SEAL",
+    "NEG_SEAL",
 }
+HEX_KEYS = (
+    "SHA512_EMPTY",
+    "SHA512_ABC",
+    "SHA512_LONG",
+    "SEAL",
+    "MUTATED_SEAL",
+    "NEG_SEAL",
+)
+# Published FIPS 180-4 vectors. Python does not compute SHA-512.
+NIST_EMPTY = "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+NIST_ABC = "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"
+NIST_LONG = "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909"
 MATRIX_KEYS = (
     "A",
     "B",
@@ -227,6 +247,31 @@ def main() -> int:
 
     jb = parse_blocks(j_out)
     rb = parse_blocks(r_out)
+
+    def hex_line(block: list[str] | None) -> str | None:
+        if block is None or len(block) != 1:
+            return None
+        s = block[0].strip().lower()
+        if len(s) != 128 or any(c not in "0123456789abcdef" for c in s):
+            return None
+        return s
+
+    jhex = {key: hex_line(jb.get(key)) for key in HEX_KEYS}
+    rhex = {key: hex_line(rb.get(key)) for key in HEX_KEYS}
+    for key in HEX_KEYS:
+        cases.append(check(
+            f"agree.{key}",
+            jhex[key] is not None and jhex[key] == rhex[key],
+            "missing" if jhex[key] is None or rhex[key] is None else "",
+        ))
+    cases.append(check("sha512.empty", jhex["SHA512_EMPTY"] == NIST_EMPTY == rhex["SHA512_EMPTY"]))
+    cases.append(check("sha512.abc", jhex["SHA512_ABC"] == NIST_ABC == rhex["SHA512_ABC"]))
+    cases.append(check("sha512.long", jhex["SHA512_LONG"] == NIST_LONG == rhex["SHA512_LONG"]))
+    cases.append(check(
+        "seal.differs_when_tensor_mutated",
+        jhex["SEAL"] is not None and jhex["SEAL"] != jhex["MUTATED_SEAL"] and rhex["SEAL"] != rhex["MUTATED_SEAL"],
+    ))
+
     parsed: dict[str, dict[str, list[list[int]] | None]] = {"J": {}, "R": {}}
     for key in AGREE:
         gj, gr = grid(jb.get(key)), grid(rb.get(key))
@@ -266,6 +311,8 @@ def main() -> int:
     cases.append(check("goldilocks.p", scalar(jb.get("GOLDILOCKS_P")) == 18446744069414584321 and jg.get("GOLDILOCKS_P") == rg.get("GOLDILOCKS_P")))
     cases.append(check("hand.exact_head", jg.get("HAND_EXACT_HEAD_MATCH") == [[1]] and jg.get("HAND_EXACT_HEAD") == jg.get("HAND_REFERENCE") == rg.get("HAND_REFERENCE")))
     cases.append(check("not_softmax", jg.get("NOT_SOFTMAX") == [[1]] and rg.get("NOT_SOFTMAX") == [[1]]))
+    cases.append(check("seal.verify", jg.get("VERIFY") == [[1]] and rg.get("VERIFY") == [[1]]))
+    cases.append(check("seal.verify_mutated_fails", jg.get("VERIFY_MUTATED") == [[0]] and rg.get("VERIFY_MUTATED") == [[0]]))
 
     routed_err = scalar(jb.get("MAX_ABS_ERROR"))
     hand_err = scalar(jb.get("HAND_MAX_ABS_ERROR"))
@@ -315,7 +362,10 @@ def main() -> int:
             "Arithmetic ran in J and R extended integers. Python only launched the "
             "processes and compared the printed decimals. The routed tensor is a "
             "separate metric; a nonzero max abs error is not a failure of the "
-            "unmasked head. TinyAPL is legacy because Complex Double cannot hold p."
+            "unmasked head. The production seal is a SHA-512 DAG computed in J and "
+            "in R over canonical integer tensors (exact head, routed prediction, "
+            "weights, prime). Python does not hash. TinyAPL is legacy because "
+            "Complex Double cannot hold p."
         ),
         "jconsole": jbin,
         "rscript": rbin,
@@ -329,6 +379,22 @@ def main() -> int:
         "goldilocks_p": str(scalar(jb.get("GOLDILOCKS_P"))) if scalar(jb.get("GOLDILOCKS_P")) is not None else None,
         "goldilocks_small_agrees": jg.get("FIELD_SMALL_AGREES") == [[1]] and rg.get("FIELD_SMALL_AGREES") == [[1]],
         "routed": routed,
+        "seal": {
+            "algorithm": "SHA-512",
+            "dag_order": ["exact_head", "predicted", "weights", "prime"],
+            "J": jhex.get("SEAL"),
+            "R": rhex.get("SEAL"),
+            "agree": jhex.get("SEAL") is not None and jhex.get("SEAL") == rhex.get("SEAL"),
+            "verify": scalar(jb.get("VERIFY")) == 1 and scalar(rb.get("VERIFY")) == 1,
+            "mutated_seal": {"J": jhex.get("MUTATED_SEAL"), "R": rhex.get("MUTATED_SEAL")},
+            "verify_mutated": scalar(jb.get("VERIFY_MUTATED")),
+            "neg_seal": {"J": jhex.get("NEG_SEAL"), "R": rhex.get("NEG_SEAL")},
+        },
+        "sha512_kat": {
+            "empty": jhex.get("SHA512_EMPTY"),
+            "abc": jhex.get("SHA512_ABC"),
+            "long": jhex.get("SHA512_LONG"),
+        },
         "J": side_record(jb, jg),
         "R": side_record(rb, rg),
         "stdout": {"J": j_out, "R": r_out},

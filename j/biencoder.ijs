@@ -5,6 +5,11 @@ NB. Unmasked head is Q +/ .* |:K and must equal A +/ .* B.
 NB. Routed head masks dot-product factors with the SUBLEQ predicate.
 NB. Goldilocks p = 2^64 - 2^32 + 1, residue via extended integers.
 
+NB. SHA-512 DAG seal (j/sha512.ijs). Self-test runs on load.
+this =. > {: 4!:3 ''
+dir =. (>: this i: '/') {. this
+load dir , 'sha512.ijs'
+
 P =: 18446744069414584321x
 GSAFE =: 65537x
 LCGA =: 48271x
@@ -153,6 +158,16 @@ HB =: require_exact 3 2 $ 1 2 0 1 2 1
 HW =: require_exact =/~ i. 3
 'HQ HK HPR HEX HREF HAG HPD HERR HMATCH' =: (HA ; HB) run HW
 
+'SHA_EMPTY SHA_ABC SHA_LONG' =. sha512_vectors ''
+SEAL =. dag_seal_hex EX ; PR ; PERM ; P
+PRm =. ((1x + (< 0 0) { PR) (< 0 0) } PR)
+MSEAL =. dag_seal_hex EX ; PRm ; PERM ; P
+VOK =. SEAL verify_dag EX ; PR ; PERM ; P
+VBAD =. SEAL verify_dag EX ; PRm ; PERM ; P
+NEG =. 1 3 $ _12x , 0x , 7x
+NW =. 1 1 $ 1x
+NSEAL =. dag_seal_hex NEG ; NEG ; NW ; P
+
 echo 'BIENCODER_V1'
 echo 'ENGINE'
 echo 'J'
@@ -230,4 +245,20 @@ echo 'HAND_MAX_ABS_ERROR'
 shows HERR
 echo 'HAND_EXACT_HEAD_MATCH'
 shows HMATCH
+echo 'SHA512_EMPTY'
+echo SHA_EMPTY
+echo 'SHA512_ABC'
+echo SHA_ABC
+echo 'SHA512_LONG'
+echo SHA_LONG
+echo 'SEAL'
+echo SEAL
+echo 'VERIFY'
+shows VOK
+echo 'MUTATED_SEAL'
+echo MSEAL
+echo 'VERIFY_MUTATED'
+shows VBAD
+echo 'NEG_SEAL'
+echo NSEAL
 exit 0

@@ -13,7 +13,7 @@ R = (D, OP, E, A, C, S)
 | **E** | Identity elements for each OP |
 | **A** | Algebraic laws (associativity only where established on D) |
 | **C** | Canonicalization (mod p residues; JSON canonical form) |
-| **S** | Sealing semantics (deterministic hash commit/chain/seal/verify stubs) |
+| **S** | Sealing. Production bi-encoder: SHA-512 DAG in J and R. Legacy pipeline: SHA-256 JSON stub. |
 
 This studies **reduction algebra** for an experimental SUBLEQ Attention Engine.
 It is **not** ordinary DB aggregation, WORM storage, or softmax transformer attention.
@@ -37,6 +37,18 @@ residues are extended integers in J (`j/biencoder.ijs`) and R gmp `bigz`
 TinyAPL cannot represent `p` exactly and is only the earlier experiment.
 The unmasked head must equal `A` times `B`. The routed tensor is reported
 separately and is not required to match that product.
+
+The production seal is a SHA-512 DAG, computed in J and again in R, not in
+Python. Nodes are the exact head, the routed prediction, the weight
+permutation, and the prime `p` (rank 0). Each node digest is SHA-512 of the
+canonical byte layout in `j/sha512.ijs` and `r/sha512.R`: magic `SRANOD01`,
+length-prefixed role, rank, dimensions, count, then length-prefixed ASCII
+decimals in row-major order. No JSON and no floats. The parent preimage is
+magic `SRADAG01`, the child count, and the raw child digests in that fixed
+order. The seal is SHA-512 of the parent preimage. `verify` recomputes it.
+A one-entry mutation of the routed tensor must change the seal and fail
+verify. The legacy SHA-256 canonical-JSON helpers in
+`reference/reduction_algebra.py` and TinyAPL `VerifyStub` are not this seal.
 
 ## SUBLEQ attention pipeline
 
@@ -65,3 +77,5 @@ ARRAY → SUBTRACT (B←B−A) → COMPARE → PREDICATE → SELECT → ROUTE �
 2. Deterministic identical inputs.
 3. `reference(X) = candidate(X) (mod p)` for Goldilocks.
 4. Never fabricate metrics; use `not_measured` when untimed.
+5. Bi-encoder seals agree across J and R, and verify fails if a sealed tensor is mutated.
+6. Benchmark seconds come from J `6!:2` or R `system.time` only.

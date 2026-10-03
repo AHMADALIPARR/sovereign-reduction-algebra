@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0.0",
+  "timestamp_pt": "2026-10-02 23:10:14 PT",
+  "note": "Every seconds value is a decimal string printed by J 6!:2 (format 0j6, rounded to 1e-6 second) or by R system.time (elapsed, plus user.self and sys.self, formatC digits 6). Python did not time these operations and did not fill gaps. Inputs are extended integers: A[i;j]=(i*N+j) mod 5 and B[i;j]=(N*N+i*N+j) mod 5, row-major. sha512_dag_seal times dag_seal_hex of exact=product, predicted=product, the 4x4 permutation, and Goldilocks p. The routed head is not in this timing. N=1024 seal is omitted for R; see not_run.",
+  "runs": [
+{
+    "language": "J",
+    "version": "j9.7.1/j64/linux/commercial/www.jsoftware.com/2026-04-06T04:00:54/clang-14-0-0/SLEEF=0",
+    "operation": "unmasked_integer_matmul",
+    "shape": {"m": 128, "k": 128, "n": 128},
+    "timer": "6!:2",
+    "trials": 3,
+    "seconds": [0.112684, 0.092637, 0.095784],
+    "checksum": "8388098",
+    "result_type": "64"
+  },
+{
+    "language": "J",
+    "version": "j9.7.1/j64/linux/commercial/www.jsoftware.com/2026-04-06T04:00:54/clang-14-0-0/SLEEF=0",
+    "operation": "sha512_dag_seal",
+    "shape": {"m": 128, "k": 128, "n": 128},
+    "timer": "6!:2",
+    "trials": 3,
+    "seconds": [6.514977, 6.452345, 6.419265],
+    "checksum": "ccafddfba100f51a3856500b009f0644f15d6956e7ecd9667d4e84c4a6a74f7cc60cfe83381f559ff7d28979ebcbc44758f07a7ba86e9a6b682adaee2555a6fc",
+    "node_bytes": 114726,
+    "result_type": "sha512"
+  },
+{
+    "language": "J",
+    "version": "j9.7.1/j64/linux/commercial/www.jsoftware.com/2026-04-06T04:00:54/clang-14-0-0/SLEEF=0",
+    "operation": "unmasked_integer_matmul",
+    "shape": {"m": 1024, "k": 1024, "n": 1024},
+    "timer": "6!:2",
+    "trials": 3,
+    "seconds": [59.500851, 61.984229, 59.716807],
+    "checksum": "4294962175",
+    "result_type": "64"
+  },
+{
+    "language": "J",
+    "version": "j9.7.1/j64/linux/commercial/www.jsoftware.com/2026-04-06T04:00:54/clang-14-0-0/SLEEF=0",
+    "operation": "sha512_dag_seal",
+    "shape": {"m": 1024, "k": 1024, "n": 1024},
+    "timer": "6!:2",
+    "trials": 1,
+    "seconds": [498.715835],
+    "checksum": "681ec299e447f7c07defe7a09ee8641c6a66fa60d041a1a8dccc5196e7c9fb2aa4238618fc0d098cc8913cf9a878aa29f27d4102cffa2ff2cfa405a3533b89af",
+    "node_bytes": 8388646,
+    "result_type": "sha512"
+  },
+{
+    "language": "R",
+    "version": "R version 4.5.0 (2025-04-11)",
+    "gmp_version": "0.7.5.1",
+    "operation": "unmasked_integer_matmul",
+    "shape": {"m": 128, "k": 128, "n": 128},
+    "timer": "system.time",
+    "trials": 3,
+    "seconds": [0.089000, 0.089000, 0.090000],
+    "user_seconds": [0.089000, 0.090000, 0.089000],
+    "sys_seconds": [0.000000, 0.000000, 0.000000],
+    "checksum": "8388098",
+    "result_type": "bigz"
+  },
+{
+    "language": "R",
+    "version": "R version 4.5.0 (2025-04-11)",
+    "gmp_version": "0.7.5.1",
+    "operation": "sha512_dag_seal",
+    "shape": {"m": 128, "k": 128, "n": 128},
+    "timer": "system.time",
+    "trials": 3,
+    "seconds": [38.453000, 36.978000, 38.912000],
+    "user_seconds": [38.444000, 36.976000, 38.909000],
+    "sys_seconds": [0.003000, 0.000000, 0.000000],
+    "checksum": "ccafddfba100f51a3856500b009f0644f15d6956e7ecd9667d4e84c4a6a74f7cc60cfe83381f559ff7d28979ebcbc44758f07a7ba86e9a6b682adaee2555a6fc",
+    "node_bytes": 114726,
+    "result_type": "sha512"
+  },
+{
+    "language": "R",
+    "version": "R version 4.5.0 (2025-04-11)",
+    "gmp_version": "0.7.5.1",
+    "operation": "unmasked_integer_matmul",
+    "shape": {"m": 1024, "k": 1024, "n": 1024},
+    "timer": "system.time",
+    "trials": 3,
+    "seconds": [66.719000, 68.561000, 64.266000],
+    "user_seconds": [66.677000, 68.544000, 64.180000],
+    "sys_seconds": [0.036000, 0.012000, 0.080000],
+    "checksum": "4294962175",
+    "result_type": "bigz"
+  }
+  ],
+  "not_run": [
+  {
+    "language": "R",
+    "line": "1024 sha512_dag_seal not started: N=128 sha512_dag_seal was measured in this process; the node preimage holds N*N integers and the seal hashes two of them, so N=1024 is 64 times the integers. This R SHA-512 is an interpreter loop over 16-bit limbs and was not run at N=1024."
+  }
+],
+  "problems": []
+}
