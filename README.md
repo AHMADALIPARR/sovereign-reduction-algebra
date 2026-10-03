@@ -90,7 +90,7 @@ b12e6f47e74d637223ead6619fd746476164bb4414dc030066e73fa607f301469fd98b5e77bcb79b
 
 ## Measured benchmarks
 
-Source: [`results/benchmarks.json`](results/benchmarks.json) (2026-10-02 23:10:14 PT).
+Source: [`results/benchmarks.json`](results/benchmarks.json) (J N=1024 matmul remeasured 2026-10-03 15:48:00 PT; other rows 2026-10-02 23:10:14 PT).
 Inputs `A[i;j]=(i·N+j) mod 5`, `B[i;j]=(N·N+i·N+j) mod 5`. Seal times hash
 exact=product, predicted=product, 4×4 permutation, and `p`.
 
@@ -98,8 +98,10 @@ exact=product, predicted=product, 4×4 permutation, and `p`.
 
 | Engine | N=128 (3 trials) | N=1024 (3 trials) |
 |--------|------------------|-------------------|
-| J 9.7 | 0.112684, 0.092637, 0.095784 | 59.500851, 61.984229, 59.716807 |
+| J 9.7 | 0.112684, 0.092637, 0.095784 | 72.315527, 73.415031, 73.807073 |
 | R 4.5 / gmp | 0.089, 0.089, 0.090 | 66.719, 68.561, 64.266 |
+
+N=1024 J matmul checksum `4294962175`, result type `64` (printed by the J bench).
 
 ### SHA-512 DAG seal (seconds)
 

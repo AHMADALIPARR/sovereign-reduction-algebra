@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "timestamp_pt": "2026-10-02 23:10:14 PT",
-  "note": "Every seconds value is a decimal string printed by J 6!:2 (format 0j6, rounded to 1e-6 second) or by R system.time (elapsed, plus user.self and sys.self, formatC digits 6). Python did not time these operations and did not fill gaps. Inputs are extended integers: A[i;j]=(i*N+j) mod 5 and B[i;j]=(N*N+i*N+j) mod 5, row-major. sha512_dag_seal times dag_seal_hex of exact=product, predicted=product, the 4x4 permutation, and Goldilocks p. The routed head is not in this timing. N=1024 seal is omitted for R; see not_run.",
+  "timestamp_pt": "2026-10-03 15:48:00 PT",
+  "note": "Every seconds value is a decimal string printed by J 6!:2 (format 0j6, rounded to 1e-6 second) or by R system.time (elapsed, plus user.self and sys.self, formatC digits 6). Python did not time these operations and did not fill gaps. Inputs are extended integers: A[i;j]=(i*N+j) mod 5 and B[i;j]=(N*N+i*N+j) mod 5, row-major. sha512_dag_seal times dag_seal_hex of exact=product, predicted=product, the 4x4 permutation, and Goldilocks p. The routed head is not in this timing. N=1024 seal is omitted for R; see not_run. On 2026-10-03 the J N=1024 unmasked_integer_matmul seconds were replaced with a new 6!:2 measurement (72.315527, 73.415031, 73.807073); checksum 4294962175 and result type 64 were printed again and are unchanged. That run's N=1024 sha512_dag_seal record had no printed SECONDS, so the earlier J N=1024 seal record is unchanged. All other J and R seconds remain the 2026-10-02 23:10:14 PT measurements.",
   "runs": [
 {
     "language": "J",
@@ -33,7 +33,7 @@
     "shape": {"m": 1024, "k": 1024, "n": 1024},
     "timer": "6!:2",
     "trials": 3,
-    "seconds": [59.500851, 61.984229, 59.716807],
+    "seconds": [72.315527, 73.415031, 73.807073],
     "checksum": "4294962175",
     "result_type": "64"
   },
