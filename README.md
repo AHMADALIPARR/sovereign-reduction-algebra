@@ -1,6 +1,6 @@
 # Sovereign Reduction Algebra
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/AHMADALIPARR/sovereign-reduction-algebra/releases/tag/v1.0.0)
 [![Language](https://img.shields.io/badge/J-9.7-2b5b84.svg)](https://www.jsoftware.com/)
 [![Language](https://img.shields.io/badge/R-4.5%20%2B%20gmp-276dc3.svg)](https://www.r-project.org/)
@@ -147,4 +147,4 @@ See [`docs/ASTRA.md`](docs/ASTRA.md).
 
 ## License
 
-MIT © 2026 AHMAD ALI PARR. See [LICENSE](LICENSE).
+Copyright © 2026 AHMAD ALI PARR. Licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
