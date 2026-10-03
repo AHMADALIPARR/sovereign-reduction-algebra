@@ -66,6 +66,28 @@ Unmasked exact head (J = R = reference):
 Live transcript of a run on this tree: [`docs/demo-transcript.txt`](docs/demo-transcript.txt)
 ([PNG](docs/images/demo-transcript.png)).
 
+## One integer training step
+
+Not softmax and not a training loop. `scripts/run_train_step.py` launches
+`j/train_step.ijs` and `r/train_step.R`. Python only checks that the printed
+integers match. `Wq` and `Wk` stay the fixed permutation, so the unmasked head
+stays `A` times `B`. The loss is the sum of absolute residuals between the exact
+product and the routed prediction. That residual is added once to an integer
+projection that starts at zero, then added elementwise to the routed prediction.
+The unmasked head is not modified. On seed 20261002 the measured loss stays
+74. Folding the projection onto the routed prediction makes the post-step
+routed max abs error 0, because the residual is added back and the post
+prediction equals the exact product. The exact head still matches `A` times
+`B`. An exact-head mismatch after the step fails the run.
+
+Post-step SHA-512 DAG seal (J = R). The weights node is `Wq` stacked over `Wk`
+stacked over the projection. The canonical layout is unchanged. The predicted
+node is the post-step routed prediction.
+
+```
+b12e6f47e74d637223ead6619fd746476164bb4414dc030066e73fa607f301469fd98b5e77bcb79b0cf15cb798086680cad39d721ffccddc2d4922801885ab7a
+```
+
 ## Measured benchmarks
 
 Source: [`results/benchmarks.json`](results/benchmarks.json) (2026-10-02 23:10:14 PT).
@@ -141,9 +163,17 @@ J stores SHA-512 words as uint32 halves; R uses uint16 limbs. Details:
 ## Astra
 
 `astra/*.apl` is GNU-APL style source for an agent registry, budget routing,
-and bounded-round mixture. It is included as architecture source and is not
-claimed as executed in this release unless a run is recorded under `results/`.
-See [`docs/ASTRA.md`](docs/ASTRA.md).
+and bounded-round mixture. A GNU APL run of that source matched the untrained
+J/R SHA-512 DAG seal
+
+```
+e6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e
+```
+
+`SEAL_MATCH` was 1. A one-cell mutation of the routed prediction changed the
+digest (`MUTATED_DIFFERS` 1). The mixture layer is not integer: the same run
+still printed floats for the route weights, the route scores, and the mixture
+answer. See [`docs/ASTRA.md`](docs/ASTRA.md).
 
 ## License
 

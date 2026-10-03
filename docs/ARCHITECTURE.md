@@ -65,7 +65,10 @@ ARRAY → SUBTRACT → COMPARE → PREDICATE → SELECT → ROUTE → REDUCE →
 ```
 
 Two towers apply one fixed permutation (`Wq +/ .* |: Wk = I` in J; the same
-product in R). Weights are not trained.
+product in R). One integer training step does not move `Wq` or `Wk`. It adds
+the routed residual to an integer projection, then adds that projection
+elementwise to the routed prediction. The unmasked head must still
+equal `A` times `B`.
 
 ## Verification rules
 

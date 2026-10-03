@@ -38,6 +38,16 @@ TinyAPL cannot represent `p` exactly and is only the earlier experiment.
 The unmasked head must equal `A` times `B`. The routed tensor is reported
 separately and is not required to match that product.
 
+One integer training step (`j/train_step.ijs`, `r/train_step.R`) is not softmax
+and not a loop. `Wq` and `Wk` stay the permutation. The loss is the integer
+residual between the routed prediction and the exact product. That residual
+updates an integer projection between the unmasked head and the routing
+layer, and the post routed prediction is the pre routed prediction plus
+that projection, elementwise. The unmasked head is not modified. A mismatch between the unmasked head and `A` times `B` still fails the
+step. The routed residual is not required to be zero. The SHA-512 DAG layout
+is unchanged.
+
+
 The production seal is a SHA-512 DAG, computed in J and again in R, not in
 Python. Nodes are the exact head, the routed prediction, the weight
 permutation, and the prime `p` (rank 0). Each node digest is SHA-512 of the
