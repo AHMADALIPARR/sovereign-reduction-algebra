@@ -1,7 +1,7 @@
 # Sovereign Reduction Algebra
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/AHMADALIPARR/sovereign-reduction-algebra/releases/tag/v1.0.0)
+[![Release](https://img.shields.io/badge/release-v1.0.1-blue.svg)](https://github.com/AHMADALIPARR/sovereign-reduction-algebra/releases/tag/v1.0.1)
 [![Language](https://img.shields.io/badge/J-9.7-2b5b84.svg)](https://www.jsoftware.com/)
 [![Language](https://img.shields.io/badge/R-4.5%20%2B%20gmp-276dc3.svg)](https://www.r-project.org/)
 [![GitHub](https://img.shields.io/badge/GitHub-AHMADALIPARR%2Fsovereign--reduction--algebra-181717.svg)](https://github.com/AHMADALIPARR/sovereign-reduction-algebra)
