@@ -1,0 +1,274 @@
+{
+  "schema_version": "1.0.0",
+  "timestamp_pt": "2026-10-01 01:17:44 PT",
+  "engine": {
+    "tinyapl_version": "0.12.0.0",
+    "tinyapl_path": "/workspace/sovereign-reduction-algebra/vendor/tinyapl",
+    "tinyapl_available": true,
+    "reference": "reference/goldilocks.py + reference/reduction_algebra.py",
+    "notes": "TinyAPL uses Complex Double; full Goldilocks p verified in Python. TinyAPL-native field demos use GSafeP=65537. SUBLEQ pipeline is not softmax attention."
+  },
+  "correctness": {
+    "passed": 38,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "goldilocks.p",
+        "pass": true,
+        "detail": "18446744069414584321"
+      },
+      {
+        "name": "goldilocks.add",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.mul",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.reduce",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.scan",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.tree",
+        "pass": true,
+        "detail": "36,3"
+      },
+      {
+        "name": "goldilocks.poly",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.inverse",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.exp",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.dot",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.add.assoc",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "goldilocks.mul.assoc",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "arith.sum",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "arith.product",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "arith.scan",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "bool.all",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "bool.xor",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "bool.threshold",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "struct.ip",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "struct.outer",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "struct.seg",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "subleq.aggregate",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "subleq.pred",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "R0",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "R1",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "R2",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "R6",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "R7",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "crypto.seal_verify",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "crypto.commit_len",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "tinyapl.demo_runs",
+        "pass": true,
+        "detail": "ok"
+      },
+      {
+        "name": "tinyapl.sum",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "tinyapl.tree36",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "tinyapl.r6",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "tinyapl.r7_agg",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "tinyapl.gsafe_mul",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "cross.gsafe_reduce",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "cross.full_p_reduce",
+        "pass": true,
+        "detail": ""
+      }
+    ]
+  },
+  "benchmarks": [
+    {
+      "topology": "R1_sequential_sum",
+      "shape": [
+        128
+      ],
+      "op": "Sum",
+      "correctness_pass": true,
+      "latency_ms": 0.2536773681640625,
+      "throughput_elems_per_s": 504577.92481203005,
+      "dependency_depth": 127,
+      "status": "measured",
+      "note": "TinyAPL \u2395_Measure on +/\u2373N (library Sum topology R0/R1 style)",
+      "raw_seconds": [
+        0.00023794174194335938,
+        0.0002567768096923828,
+        0.00020003318786621094,
+        0.000247955322265625,
+        0.0003256797790527344
+      ]
+    },
+    {
+      "topology": "R1_sequential_sum",
+      "shape": [
+        1024
+      ],
+      "op": "Sum",
+      "correctness_pass": true,
+      "latency_ms": 1.0922431945800781,
+      "throughput_elems_per_s": 937520.1466864577,
+      "dependency_depth": 1023,
+      "status": "measured",
+      "note": "TinyAPL \u2395_Measure on +/\u2373N (library Sum topology R0/R1 style)",
+      "raw_seconds": [
+        0.0009634494781494141,
+        0.0010187625885009766,
+        0.0012302398681640625,
+        0.0010361671447753906,
+        0.0012125968933105469
+      ]
+    },
+    {
+      "topology": "R1_sequential_sum",
+      "shape": [
+        4096
+      ],
+      "op": "Sum",
+      "correctness_pass": true,
+      "latency_ms": 3.2712936401367188,
+      "throughput_elems_per_s": 1252104.0452451752,
+      "dependency_depth": 4095,
+      "status": "measured",
+      "note": "TinyAPL \u2395_Measure on +/\u2373N (library Sum topology R0/R1 style)",
+      "raw_seconds": [
+        0.003023386001586914,
+        0.002816915512084961,
+        0.004608869552612305,
+        0.0027832984924316406,
+        0.0031239986419677734
+      ]
+    }
+  ],
+  "goldilocks": {
+    "p": "18446744069414584321",
+    "tinyapl_native_modulus": "65537",
+    "note": "Full-field ops authoritative in Python; TinyAPL GSafe for exact Double-safe demos"
+  }
+}
