@@ -25,9 +25,9 @@ from biencoder import (  # noqa: E402
     M,
     N,
     SEED,
-    P,
     flatten,
     hand_example,
+    large_field_inputs,
     matmul,
     run_seeded,
     transpose,
@@ -115,8 +115,16 @@ def parse_labeled(stdout: str) -> dict[str, list[int]]:
     return out
 
 
-def check(name: str, cond: bool, detail: str = "") -> dict:
-    return {"name": name, "pass": bool(cond), "detail": detail}
+def check(name: str, cond: bool, detail: str = "", gates: bool = True) -> dict:
+    return {"name": name, "pass": bool(cond), "detail": detail, "gates_exit": gates}
+
+
+def residue_distance(a: int, b: int, mod: int) -> int:
+    """Balanced absolute residue of a-b in 0 .. mod//2. Computed, not a float error."""
+    d = (a - b) % mod
+    if d > mod // 2:
+        d = mod - d
+    return d
 
 
 def main() -> int:
@@ -160,6 +168,10 @@ def main() -> int:
     cases.append(check(
         "goldilocks.large_python_only_shape",
         len(large_ref) == 4 and len(large_ref[0]) == 4 and all(0 <= x < GP for row in large_ref for x in row),
+    ))
+    cases.append(check(
+        "goldilocks.large_exact_head_eq_reference",
+        seeded["field_large"]["exact_head"] == large_ref,
     ))
 
     lib = flatten_apl((ROOT / "tinyapl" / "library.apl").read_text(encoding="utf-8"))
@@ -205,12 +217,16 @@ def main() -> int:
 
     exact_match = seeded["predicted"] == seeded["reference"]
     tensor_detail = f"max_abs_error={seeded['max_abs_error']}"
-    cases.append(check("tensor_match.predicted_vs_exact_matmul", exact_match, tensor_detail))
+    cases.append(check(
+        "tensor_match.predicted_vs_exact_matmul",
+        exact_match,
+        tensor_detail + " (recorded; does not gate exit)",
+        gates=False,
+    ))
 
-    # System success ignores the scientific question of whether the sparse
-    # route equals full matmul; that result is tensor_match above.
-    gate_names = {c["name"] for c in cases if c["name"] != "tensor_match.predicted_vs_exact_matmul"}
-    failed_gates = [c for c in cases if c["name"] in gate_names and not c["pass"]]
+    # Exit status is about algorithm agreement. Whether the sparse SUBLEQ
+    # route equals full matmul is tensor_match and does not gate the exit.
+    failed_gates = [c for c in cases if c.get("gates_exit", True) and not c["pass"]]
     overall = len(failed_gates) == 0 and ok
 
     for c in cases:
@@ -265,12 +281,19 @@ def main() -> int:
                 "distinct scalar (ulp at 2^64 is 4096). Large residues were reduced "
                 "only in reference/biencoder.py."
             ),
-            "large_A": seeded["field_large"] and None,
+            "large_A": large_field_inputs()[0],
+            "large_B": large_field_inputs()[1],
             "large_reference_matmul": seeded["field_large"]["reference"],
             "large_predicted": seeded["field_large"]["predicted"],
             "large_exact_head": seeded["field_large"]["exact_head"],
-            "large_max_abs_error_mod_p": max(
-                abs(p - r) for p, r in zip(
+            "large_mismatch_count": sum(
+                p != r for p, r in zip(
+                    flatten(seeded["field_large"]["predicted"]),
+                    flatten(seeded["field_large"]["reference"]),
+                )
+            ),
+            "large_max_balanced_residue_distance": max(
+                residue_distance(p, r, GP) for p, r in zip(
                     flatten(seeded["field_large"]["predicted"]),
                     flatten(seeded["field_large"]["reference"]),
                 )
@@ -288,13 +311,6 @@ def main() -> int:
         },
         "overall_pass": overall,
     }
-    # Fix large_A properly (the and None was a mistake — write the matrices)
-    from biencoder import large_field_inputs
-    la, lb = large_field_inputs()
-    result["goldilocks"]["large_A"] = la
-    result["goldilocks"]["large_B"] = lb
-
-    # JSON cannot hold raw ints that are fine — they can. P-values fit.
     out_path = ROOT / "results" / "biencoder_result.json"
     out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print("wrote", out_path)

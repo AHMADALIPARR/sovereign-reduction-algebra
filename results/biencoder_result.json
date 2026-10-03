@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "timestamp_pt": "2026-10-02 22:02:54 PT",
+  "timestamp_pt": "2026-10-02 22:03:33 PT",
   "note": "SUBLEQ bi-encoder is not softmax attention. Weights are a fixed permutation, not trained. Predicted tensor is the SUBLEQ-routed dot product. exact_head is the unmasked contraction and must equal reference matmul. Full Goldilocks p is Python-only.",
   "shapes": {
     "M": 4,
@@ -388,6 +388,32 @@
         18446744069414584318
       ]
     ],
+    "large_B": [
+      [
+        18446744069414584317,
+        2,
+        3,
+        1
+      ],
+      [
+        6,
+        18446744069414584320,
+        0,
+        5
+      ],
+      [
+        1,
+        8,
+        18446744069414584315,
+        2
+      ],
+      [
+        7,
+        3,
+        4,
+        18446744069414584319
+      ]
+    ],
     "large_reference_matmul": [
       [
         82,
@@ -466,33 +492,8 @@
         39
       ]
     ],
-    "large_max_abs_error_mod_p": 18446744069414584301,
-    "large_B": [
-      [
-        18446744069414584317,
-        2,
-        3,
-        1
-      ],
-      [
-        6,
-        18446744069414584320,
-        0,
-        5
-      ],
-      [
-        1,
-        8,
-        18446744069414584315,
-        2
-      ],
-      [
-        7,
-        3,
-        4,
-        18446744069414584319
-      ]
-    ]
+    "large_mismatch_count": 14,
+    "large_max_balanced_residue_distance": 47
   },
   "hand_example": {
     "predicted": [
@@ -518,113 +519,140 @@
     "max_abs_error": 2
   },
   "correctness": {
-    "passed": 20,
+    "passed": 21,
     "failed": 1,
     "cases": [
       {
         "name": "hand.predicted",
         "pass": true,
-        "detail": "[[7, 5], [4, 9]]"
+        "detail": "[[7, 5], [4, 9]]",
+        "gates_exit": true
       },
       {
         "name": "hand.reference",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "hand.max_abs_error",
         "pass": true,
-        "detail": "2"
+        "detail": "2",
+        "gates_exit": true
       },
       {
         "name": "weights.permutation_inverse",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "python.exact_head_eq_matmul",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "goldilocks.small_matches_integer",
         "pass": true,
-        "detail": "small products do not wrap mod p"
+        "detail": "small products do not wrap mod p",
+        "gates_exit": true
       },
       {
         "name": "goldilocks.large_python_only_shape",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
+      },
+      {
+        "name": "goldilocks.large_exact_head_eq_reference",
+        "pass": true,
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.runs",
         "pass": true,
-        "detail": "BIENCODER_V1\nM\n4\nK\n4\nN\n4\nSEED\n20261002\nA\n\u27e82 \u22c4 4 \u22c4 0 \u22c4 0 \u22c4 3 \u22c4 3 \u22c4 0 \u22c4 4 \u22c4 3 \u22c4 3 \u22c4 3 \u22c4 2 \u22c4 2 \u22c4 1 \u22c4 2 \u22c4 0\u27e9\nB\n\u27e81 \u22c4 3 \u22c4 2 \u22c4 2 \u22c4 4 \u22c4 3 \u22c4 2 \u22c4 3 \u22c4 0 \u22c4 3 \u22c4 2 \u22c4 4 \u22c4 2 \u22c4 1 \u22c4 0 \u22c4 1\u27e9\nPREDICTED\n\u27e818 \u22c4 12 \u22c4 12 \u22c4 16 \u22c4 11 \u22c4 22 \u22c4 12 \u22c4 19 \u22c4 7 \u22c4 29 \u22c4 18 \u22c4 17 \u22c4 2 \u22c4 0 \u22c4 8 \u22c4 4\u27e9\nEXACT_HEAD\n\u27e818 \u22c4 18 \u22c4 12 \u22c4 16 \u22c4 23 \u22c4 22 \u22c4 12 \u22c4 19 \u22c4 19 \u22c4 29 \u22c4 18 \u22c4 29 \u22c4 6 \u22c4 15 \u22c4 10 \u22c4 15\u27e9\nREFERENCE\n\u27e818 \u22c4 18 \u22c4 12 \u22c4 16 \u22c4 23 \u22c4 22 \u22c4 12 \u22c4 19 \u22c4 19 "
+        "detail": "BIENCODER_V1\nM\n4\nK\n4\nN\n4\nSEED\n20261002\nA\n\u27e82 \u22c4 4 \u22c4 0 \u22c4 0 \u22c4 3 \u22c4 3 \u22c4 0 \u22c4 4 \u22c4 3 \u22c4 3 \u22c4 3 \u22c4 2 \u22c4 2 \u22c4 1 \u22c4 2 \u22c4 0\u27e9\nB\n\u27e81 \u22c4 3 \u22c4 2 \u22c4 2 \u22c4 4 \u22c4 3 \u22c4 2 \u22c4 3 \u22c4 0 \u22c4 3 \u22c4 2 \u22c4 4 \u22c4 2 \u22c4 1 \u22c4 0 \u22c4 1\u27e9\nPREDICTED\n\u27e818 \u22c4 12 \u22c4 12 \u22c4 16 \u22c4 11 \u22c4 22 \u22c4 12 \u22c4 19 \u22c4 7 \u22c4 29 \u22c4 18 \u22c4 17 \u22c4 2 \u22c4 0 \u22c4 8 \u22c4 4\u27e9\nEXACT_HEAD\n\u27e818 \u22c4 18 \u22c4 12 \u22c4 16 \u22c4 23 \u22c4 22 \u22c4 12 \u22c4 19 \u22c4 19 \u22c4 29 \u22c4 18 \u22c4 29 \u22c4 6 \u22c4 15 \u22c4 10 \u22c4 15\u27e9\nREFERENCE\n\u27e818 \u22c4 18 \u22c4 12 \u22c4 16 \u22c4 23 \u22c4 22 \u22c4 12 \u22c4 19 \u22c4 19 ",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.shapes",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.inputs",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.predicted_matches_python",
         "pass": true,
-        "detail": "tiny=[18, 12, 12, 16, 11, 22, 12, 19, 7, 29, 18, 17, 2, 0, 8, 4] py=[18, 12, 12, 16, 11, 22, 12, 19, 7, 29, 18, 17, 2, 0, 8, 4]"
+        "detail": "tiny=[18, 12, 12, 16, 11, 22, 12, 19, 7, 29, 18, 17, 2, 0, 8, 4] py=[18, 12, 12, 16, 11, 22, 12, 19, 7, 29, 18, 17, 2, 0, 8, 4]",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.exact_head_matches_python",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.reference_matches_python",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.max_abs_error",
         "pass": true,
-        "detail": "[15]"
+        "detail": "[15]",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.aggregates",
         "pass": true,
-        "detail": "tiny=[-1, -1, -2, -1, -4, -3, -6, -4, -5, -1, -5, -2, -3, 0, 0, 0] py=[-1, -1, -2, -1, -4, -3, -6, -4, -5, -1, -5, -2, -3, 0, 0, 0]"
+        "detail": "tiny=[-1, -1, -2, -1, -4, -3, -6, -4, -5, -1, -5, -2, -3, 0, 0, 0] py=[-1, -1, -2, -1, -4, -3, -6, -4, -5, -1, -5, -2, -3, 0, 0, 0]",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.predicates",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.gsafe",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.exact_head_flag",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tinyapl.not_softmax_flag",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "subleq.path_executed",
         "pass": true,
-        "detail": ""
+        "detail": "",
+        "gates_exit": true
       },
       {
         "name": "tensor_match.predicted_vs_exact_matmul",
         "pass": false,
-        "detail": "max_abs_error=15"
+        "detail": "max_abs_error=15 (recorded; does not gate exit)",
+        "gates_exit": false
       }
     ]
   },
