@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0.0",
-  "timestamp_pt": "2026-10-02 22:36:44 PT",
+  "timestamp_pt": "2026-10-02 23:12:47 PT",
   "note": "SUBLEQ bi-encoder is not softmax attention and not a trained model. Arithmetic ran in J and R extended integers. Python only launched the processes and compared the printed decimals. The routed tensor is a separate metric; a nonzero max abs error is not a failure of the unmasked head. The production seal is a SHA-512 DAG computed in J and in R over canonical integer tensors (exact head, routed prediction, weights, prime). Python does not hash. TinyAPL is legacy because Complex Double cannot hold p.",
   "jconsole": "/home/box/j/j9.7/bin/jconsole",
   "rscript": "/usr/bin/Rscript",

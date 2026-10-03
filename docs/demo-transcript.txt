@@ -1,0 +1,129 @@
+Sovereign Reduction Algebra — seeded 4×4 bi-encoder demo
+Captured: 2026-10-02 (America/Los_Angeles)
+Command: JCONSOLE=.../jconsole python3 scripts/run_biencoder.py
+
+=== J (j/biencoder.ijs) — selected printed tensors ===
+ENGINE
+J
+PREDICTED
+18 12 12 16
+11 22 12 19
+ 7 29 18 17
+ 2  0  8  4
+EXACT_HEAD
+18 18 12 16
+23 22 12 19
+19 29 18 29
+ 6 15 10 15
+REFERENCE
+18 18 12 16
+23 22 12 19
+19 29 18 29
+ 6 15 10 15
+MAX_ABS_ERROR
+15
+GOLDILOCKS_P
+18446744069414584321
+SEAL
+e6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e
+VERIFY
+1
+
+=== R (r/biencoder.R) — selected printed tensors ===
+ENGINE
+R
+PREDICTED
+18 12 12 16
+11 22 12 19
+7 29 18 17
+2 0 8 4
+EXACT_HEAD
+18 18 12 16
+23 22 12 19
+19 29 18 29
+6 15 10 15
+REFERENCE
+18 18 12 16
+23 22 12 19
+19 29 18 29
+6 15 10 15
+MAX_ABS_ERROR
+15
+GOLDILOCKS_P
+18446744069414584321
+SEAL
+e6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e
+VERIFY
+1
+
+=== Launcher comparison (scripts/run_biencoder.py) ===
+=== SUBLEQ bi-encoder (J and R) ===
+time: 2026-10-02 23:12:45 PT
+  [OK] j.runs
+  [OK] r.runs
+  [OK] agree.SHA512_EMPTY
+  [OK] agree.SHA512_ABC
+  [OK] agree.SHA512_LONG
+  [OK] agree.SEAL
+  [OK] agree.MUTATED_SEAL
+  [OK] agree.NEG_SEAL
+  [OK] sha512.empty
+  [OK] sha512.abc
+  [OK] sha512.long
+  [OK] seal.differs_when_tensor_mutated
+  [OK] agree.M
+  [OK] agree.K
+  [OK] agree.N
+  [OK] agree.SEED
+  [OK] agree.RADIX
+  [OK] agree.A
+  [OK] agree.B
+  [OK] agree.WQ
+  [OK] agree.WK
+  [OK] agree.Q
+  [OK] agree.KTOWER
+  [OK] agree.PREDICTED
+  [OK] agree.EXACT_HEAD
+  [OK] agree.REFERENCE
+  [OK] agree.AGGREGATES
+  [OK] agree.PREDICATES
+  [OK] agree.GSAFE_PREDICTED
+  [OK] agree.MAX_ABS_ERROR
+  [OK] agree.EXACT_HEAD_MATCH
+  [OK] agree.PERMUTATION_INVERSE
+  [OK] agree.SHAPES_OK
+  [OK] agree.NOT_SOFTMAX
+  [OK] agree.GOLDILOCKS_P
+  [OK] agree.FIELD_SMALL_PREDICTED
+  [OK] agree.FIELD_SMALL_EXACT_HEAD
+  [OK] agree.FIELD_SMALL_REFERENCE
+  [OK] agree.FIELD_SMALL_AGREES
+  [OK] agree.FIELD_LARGE_PREDICTED
+  [OK] agree.FIELD_LARGE_EXACT_HEAD
+  [OK] agree.FIELD_LARGE_REFERENCE
+  [OK] agree.FIELD_LARGE_EXACT_MATCH
+  [OK] agree.HAND_PREDICTED
+  [OK] agree.HAND_EXACT_HEAD
+  [OK] agree.HAND_REFERENCE
+  [OK] agree.HAND_MAX_ABS_ERROR
+  [OK] agree.HAND_EXACT_HEAD_MATCH
+  [OK] agree.VERIFY
+  [OK] agree.VERIFY_MUTATED
+  [OK] exact_head.J_equals_reference
+  [OK] exact_head.R_equals_reference
+  [OK] exact_head.engines_agree
+  [OK] shapes
+  [OK] permutation_inverse
+  [OK] goldilocks.small_integer_agreement
+  [OK] goldilocks.large_exact_head
+  [OK] goldilocks.p
+  [OK] hand.exact_head
+  [OK] not_softmax
+  [OK] seal.verify
+  [OK] seal.verify_mutated_fails
+routed max_abs_error: 15 (not required to be 0)
+hand routed max_abs_error: 2
+wrote /workspace/sovereign-reduction-algebra/results/biencoder_result.json
+overall_pass: True
+
+J exit=0 R exit=0 launcher exit=0

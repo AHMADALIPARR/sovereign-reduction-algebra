@@ -1,124 +1,150 @@
-# Sovereign Reduction Algebra (TinyAPL)
+# Sovereign Reduction Algebra
 
-Experimental **reduction algebra** `R = (D, OP, E, A, C, S)` realized in
-[TinyAPL](https://github.com/RubenVerg/TinyAPL) with a Python Goldilocks reference.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/AHMADALIPARR/sovereign-reduction-algebra/releases/tag/v1.0.0)
+[![Language](https://img.shields.io/badge/J-9.7-2b5b84.svg)](https://www.jsoftware.com/)
+[![Language](https://img.shields.io/badge/R-4.5%20%2B%20gmp-276dc3.svg)](https://www.r-project.org/)
+[![GitHub](https://img.shields.io/badge/GitHub-AHMADALIPARR%2Fsovereign--reduction--algebra-181717.svg)](https://github.com/AHMADALIPARR/sovereign-reduction-algebra)
 
-This is **not** ordinary aggregation, DB hashing, WORM storage, or softmax attention.
-The SUBLEQ attention pipeline is subtract → compare → predicate → select → route → reduce.
+Array reduction algebra for an experimental SUBLEQ attention / bi-encoder.
+Production arithmetic is **J 9.7** and **R 4.5 with gmp `bigz`**. Python only
+launches those processes and compares the integers they print.
+
+This is **not** a trained softmax transformer. Tower weights are a fixed
+permutation. The late interaction is subtract → compare → predicate → select →
+route → reduce.
+
+![Architecture](docs/images/architecture.svg)
+
+## What it does
+
+Two towers apply one fixed permutation. The unmasked attention head must equal
+exact integer matrix multiplication. A SUBLEQ-routed prediction is reported
+separately; its absolute error is not required to be zero. Both engines seal
+the same tensors with a SHA-512 DAG and must agree on the digest.
+
+Goldilocks field modulus:
+
+```
+p = 18446744069414584321 = 2^64 − 2^32 + 1
+```
+
+held as an extended integer in J and in R. TinyAPL is retained only as a legacy
+demo: Complex Double cannot hold `p` (ulp at `2^64` is 4096).
+
+## Quick start
+
+```bash
+# Requires jconsole (J 9.7+) and Rscript with the gmp package.
+JCONSOLE=/path/to/jconsole python3 scripts/run_biencoder.py
+python3 -m unittest tests.test_biencoder
+JCONSOLE=/path/to/jconsole python3 scripts/run_benchmarks.py
+```
+
+`run_biencoder.py` exits non-zero if the unmasked head disagrees with the
+printed reference product, shapes disagree, J and R disagree on the seeded
+4×4 case, or the SHA-512 DAG seals differ. Routed max abs error does not fail
+the run.
+
+## Seeded 4×4 result
+
+Unmasked exact head (J = R = reference):
+
+```
+18 18 12 16
+23 22 12 19
+19 29 18 29
+ 6 15 10 15
+```
+
+| Metric | Value |
+|--------|-------|
+| Routed max abs error | 15 |
+| Goldilocks `p` | 18446744069414584321 |
+| Shared SHA-512 DAG seal | `e6b4a8fda2cde450bd3d9c2b14932136b2894e2b78a1d6c91c52681ec06f3bd7f13e660a655ca84171ccb77584cc0729792c2123ab5b4b758e74576323756f6e` |
+
+Live transcript of a run on this tree: [`docs/demo-transcript.txt`](docs/demo-transcript.txt)
+([PNG](docs/images/demo-transcript.png)).
+
+## Measured benchmarks
+
+Source: [`results/benchmarks.json`](results/benchmarks.json) (2026-10-02 23:10:14 PT).
+Inputs `A[i;j]=(i·N+j) mod 5`, `B[i;j]=(N·N+i·N+j) mod 5`. Seal times hash
+exact=product, predicted=product, 4×4 permutation, and `p`.
+
+### Matmul (seconds)
+
+| Engine | N=128 (3 trials) | N=1024 (3 trials) |
+|--------|------------------|-------------------|
+| J 9.7 | 0.112684, 0.092637, 0.095784 | 59.500851, 61.984229, 59.716807 |
+| R 4.5 / gmp | 0.089, 0.089, 0.090 | 66.719, 68.561, 64.266 |
+
+### SHA-512 DAG seal (seconds)
+
+| Engine | N=128 (3 trials) | N=1024 |
+|--------|------------------|--------|
+| J 9.7 | 6.514977, 6.452345, 6.419265 | 498.715835 (1 trial) |
+| R 4.5 / gmp | 38.453, 36.978, 38.912 | not run |
+
+Digests:
+
+- N=128 (J = R): `ccafddfba100f51a3856500b009f0644f15d6956e7ecd9667d4e84c4a6a74f7cc60cfe83381f559ff7d28979ebcbc44758f07a7ba86e9a6b682adaee2555a6fc`
+- N=1024 (J): `681ec299e447f7c07defe7a09ee8641c6a66fa60d041a1a8dccc5196e7c9fb2aa4238618fc0d098cc8913cf9a878aa29f27d4102cffa2ff2cfa405a3533b89af`
+
+R N=1024 seal was not started; see `not_run` in `results/benchmarks.json`.
+
+Full tables: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 
 ## Layout
 
 ```
 sovereign-reduction-algebra/
+  LICENSE
   README.md
-  docs/SPEC.md              # algebra spec, including the SHA-512 DAG byte layout
-  docs/result_schema.json
-  j/biencoder.ijs           # production J arithmetic and SHA-512 DAG seal
-  j/sha512.ijs
-  j/bench.ijs               # measured 6!:2 benches
-  r/biencoder.R             # production R/gmp arithmetic and SHA-512 DAG seal
-  r/sha512.R
-  r/bench.R                 # measured system.time benches
-  tinyapl/                  # legacy TinyAPL sources (not production)
-  reference/                # legacy Python Goldilocks + reduction algebra
-  scripts/run_biencoder.py  # launch J and R, compare printed integers and seals
-  scripts/run_benchmarks.py # record J/R timer output only
-  results/                  # measured JSON only (never fabricated)
-  vendor/tinyapl            # TinyAPL 0.12.0.0 Linux binary
+  docs/
+    ARCHITECTURE.md   # system map
+    BENCHMARKS.md     # measured tables only
+    SEAL.md           # SHA-512 DAG byte layout
+    ASTRA.md          # astra/*.apl notes
+    SPEC.md           # reduction algebra object
+    demo-transcript.txt
+    images/
+  j/                  # production J arithmetic + seal + benches
+  r/                  # production R/gmp arithmetic + seal + benches
+  astra/              # GNU-APL style registry / routing / mixture (source included)
+  tinyapl/            # legacy TinyAPL demos
+  reference/          # legacy Python Goldilocks + reduction algebra
+  scripts/            # launchers (no numeric authority)
+  results/            # measured JSON only
+  tests/
+  vendor/tinyapl      # TinyAPL 0.12.0.0 Linux binary
 ```
 
-## TinyAPL install / run (this box)
+## Documentation
 
-1. Binary from GitHub release `0.12.0.0` asset `tinyapl` (Linux).
-2. Needs `libncurses.so.6` (`apt install libncurses6`).
-3. CLI:
-   - `vendor/tinyapl` — REPL (empty line exits)
-   - `vendor/tinyapl path/to/file.apl` — run a file
+| Document | Contents |
+|----------|----------|
+| [Architecture](docs/ARCHITECTURE.md) | Engines, pipeline, verification rules |
+| [Benchmarks](docs/BENCHMARKS.md) | Matmul and seal timings from `benchmarks.json` |
+| [Seal](docs/SEAL.md) | Node roles `exact_head`, `predicted`, `weights`, `prime`; parent hash of child digests |
+| [Astra](docs/ASTRA.md) | APL agent registry, routing, mixture sources |
+| [Spec](docs/SPEC.md) | Reduction algebra object `R = (D, OP, E, A, C, S)` |
 
-**File-mode quirks we hit and encoded around:**
+## SHA-512 DAG seal (summary)
 
-- Prefer `⋄`-separated statements (or the flattened `demo_run.apl`).
-- Array locals must be **lowercase** (Capitals are function names).
-- Replicate is `⌿` (`/` is reduce).
-- Scan: use prefix folds `ScanSum←{(+/)¨(1+⍳≢⍵)↑¨⊂⍵}` (`+\` is not a classic scan here).
-- `∇` recursion hung in this build — tree reduce uses `PairSum⍣{1=≢⍵}`.
-- Numbers are **Complex Double** — Goldilocks `p` is not an exact distinct scalar.
+Four child nodes — `exact_head`, `predicted`, `weights`, `prime` — each hashed
+as a canonical integer tensor (`SRANOD01` …). The parent preimage is
+`SRADAG01` plus the raw child digests in that order. Seal = SHA-512(parent).
+J stores SHA-512 words as uint32 halves; R uses uint16 limbs. Details:
+[`docs/SEAL.md`](docs/SEAL.md).
 
-### Run TinyAPL demo
+## Astra
 
-```bash
-./vendor/tinyapl tinyapl/demo_run.apl
-```
+`astra/*.apl` is GNU-APL style source for an agent registry, budget routing,
+and bounded-round mixture. It is included as architecture source and is not
+claimed as executed in this release unless a run is recorded under `results/`.
+See [`docs/ASTRA.md`](docs/ASTRA.md).
 
-### Run full pipeline (correctness + optional benches)
+## License
 
-```bash
-python3 scripts/run_pipeline.py
-```
-
-Results land in `results/pipeline_result.json`. Benchmarks run **only** if correctness passes.
-Latency fields are real `⎕_Measure` samples or explicitly `not_measured`.
-
-## Goldilocks
-
-- Older reduction-algebra checks: `reference/goldilocks.py` with `p = 2^64 - 2^32 + 1`.
-- Bi-encoder field arithmetic does **not** use that module. J and R hold `p` as an extended integer.
-- TinyAPL demos: `GSafeP = 65537 (Fermat prime)` for exact Double-safe ops.
-- Verification rule: `reference(X) = candidate(X) (mod p)` for full-field cases.
-
-## Topologies
-
-R0 scalar-reference · R1 sequential (D=N−1) · R2 balanced-tree (⌈log2 N⌉) ·
-R3 chunked · R4 segmented · R5 tacit-fused · R6 goldilocks-field · R7 subleq-routed-field.
-
-## License / status
-
-Experimental research code. The production seal is SHA-512 in J and R, described below. The older Python JSON HMAC and TinyAPL `VerifyStub` are legacy and are not that seal.
-
-## SUBLEQ bi-encoder (production: J and R)
-
-Not softmax attention and not a trained model. No timings are published here.
-
-Production arithmetic is **only** extended integers in:
-
-- `j/biencoder.ijs` — J (`jconsole` / `ijconsole`, j9). Matmul is `+/ .*`.
-- `r/biencoder.R` — R with **gmp** `bigz` (never double, never base `%*%` on numeric). `p` does not fit in signed 64-bit, so bit64 is not used.
-
-Python `scripts/run_biencoder.py` is a process launcher. It does not multiply or reduce mod `p`. It exits **non-zero** if the unmasked head disagrees with the printed reference product, shapes disagree, or J and R disagree on the seeded 4×4 case. The SUBLEQ-routed tensor is a separate metric (`routed.max_abs_error`); it is **not** required to be zero and is not treated as a pass of exact matmul.
-
-Two towers apply one fixed permutation (`Wq +/ .* |: Wk = I` in J, the same product in R). Weights are not trained. The late interaction is subtract → compare → predicate → select → route → reduce, and that predicate masks factors of the dot product. The unmasked head must equal exact `A +/ .* B`.
-
-Goldilocks `p = 18446744069414584321` is an extended integer in both J and R. The seeded small products agree with the field product because they do not wrap. A fixed large residue case is reduced in both languages and must agree. `reference/biencoder.py` is retired and raises if imported.
-
-TinyAPL (`tinyapl/biencoder.apl`) is the earlier experiment only. Its scalars are Complex Double and cannot hold `p` (ulp at 2^64 is 4096). It is not the production runtime.
-
-```bash
-# JCONSOLE and RSCRIPT override discovery. gmp is loaded from ~/R/library when present.
-python3 scripts/run_biencoder.py
-python3 -m unittest tests.test_biencoder
-python3 scripts/run_benchmarks.py
-```
-
-`scripts/run_biencoder.py` writes `results/biencoder_result.json` from the integers and hex digests J and R actually printed. It exits non-zero if those digests differ. `scripts/run_benchmarks.py` writes `results/benchmarks.json` from J `6!:2` and R `system.time` only.
-
-### SHA-512 DAG seal
-
-Not the SHA-256 canonical-JSON stub in `reference/reduction_algebra.py`, and not TinyAPL `VerifyStub`. Both of those remain only so the older reduction-algebra demo still runs. They are not production cryptography. Python does not hash the bi-encoder.
-
-J (`j/sha512.ijs`) and R (`r/sha512.R`) each implement SHA-512 (FIPS 180-4). J keeps each 64-bit word as two uint32 halves because `b.` is not exact at or above `2^63`. R keeps each word as four uint16 limbs because a uint32 with the high bit set is R's `NA_integer_` and cannot go through `bitw*`. The seeded run prints the same lowercase hex seal from both.
-
-Canonical bytes are big-endian and contain no JSON and no floats. Decimal integers are ASCII, with an optional leading `-`, no `+`, and no leading zeros (`0` is `0`).
-
-Node preimage:
-
-- 8 bytes `SRANOD01`
-- uint32 length and ASCII role (`exact_head`, `predicted`, `weights`, or `prime`)
-- uint32 rank, then that many uint32 dimensions
-- uint32 count (rank 0 has count 1; that node is the Goldilocks prime)
-- each integer, row-major (last axis fastest): uint32 byte length, then the decimal ASCII
-
-The node digest is SHA-512 of that preimage. The DAG preimage is 8 bytes `SRADAG01`, a uint32 child count, then the raw 64-byte digests in the order exact head, routed prediction, weights, prime. The seal is SHA-512 of that preimage. `verify` recomputes the seal and compares. A tensor with `predicted[0,0]` increased by 1 must fail verify. The unmasked head is still required to match exact matmul. The routed error is still reported and is not forced to 0.
-
-### Benchmarks
-
-`j/bench.ijs` and `r/bench.R` time square extended-integer products `A +/ .* B` (R: `%*%` on `bigz`) and the production `dag_seal_hex` of that product (used both as the exact head and as the predicted tensor), the 4×4 permutation, and `p`. Entries are `(i*N+j) mod 5` and `(N*N+i*N+j) mod 5`. Shapes that finished are recorded in `results/benchmarks.json`. N=1024 sealing under the R interpreter was not started; the file says why. No timing in that file was typed in by hand.
+MIT © 2026 AHMAD ALI PARR. See [LICENSE](LICENSE).
