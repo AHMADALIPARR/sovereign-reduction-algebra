@@ -23,7 +23,7 @@ Every seconds value was printed by J `6!:2` (format `0j6`) or R `system.time`
 |--------|---|------------|--------|
 | J 9.7 | 128 | 6.514977, 6.452345, 6.419265 | `ccafddfba100f51a3856500b009f0644f15d6956e7ecd9667d4e84c4a6a74f7cc60cfe83381f559ff7d28979ebcbc44758f07a7ba86e9a6b682adaee2555a6fc` |
 | R 4.5 / gmp | 128 | 38.453, 36.978, 38.912 | same as J N=128 |
-| J 9.7 | 1024 | 498.715835 (1 trial) | `681ec299e447f7c07defe7a09ee8641c6a66fa60d041a1a8dccc5196e7c9fb2aa4238618fc0d098cc8913cf9a878aa29f27d4102cffa2ff2cfa405a3533b89af` |
+| J 9.7 | 1024 | 512.146054 (1 trial) | `681ec299e447f7c07defe7a09ee8641c6a66fa60d041a1a8dccc5196e7c9fb2aa4238618fc0d098cc8913cf9a878aa29f27d4102cffa2ff2cfa405a3533b89af` |
 | R 4.5 / gmp | 1024 | not run | — |
 
 R N=1024 seal was not started: the N=128 seal was measured in-process; the node
